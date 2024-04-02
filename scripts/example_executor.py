@@ -1,8 +1,8 @@
 import time
 
-from scripts.run_script import MyJob
+from submitit_tools.example_job_class import MyJob
 from submitit_tools.run_state import SubmititState
-from configs.run_config import ExampleRunConfig, WandbConfig
+from configs.run_config import ExampleRunConfig
 from configs.submitit_config import SubmititExecutorConfig
 from submitit_tools.create_executor import create_executor
 
