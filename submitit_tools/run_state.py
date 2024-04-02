@@ -92,10 +92,10 @@ class SubmititState:
         # Update the progress bar
         if self.progress_bar is not None:
             self.progress_bar.update(1)
-            if result == FAILED_JOB:
-                self.progress_bar.set_postfix(f"Failed job at {job_name}")
-            else:
-                self.progress_bar.set_postfix(f"Finished job at {job_name}")
+            # if result == FAILED_JOB:
+            #     self.progress_bar.set_postfix(f"Failed job at {job_name}")
+            # else:
+            #     self.progress_bar.set_postfix(f"Finished job at {job_name}")
 
     def tasks_left(self):
         """This method returns the number of tasks left
