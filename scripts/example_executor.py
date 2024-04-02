@@ -9,11 +9,11 @@ from submitit_tools.create_executor import create_executor
 
 run_configs = []
 wandb_configs = []
-sub_cfg = SubmititExecutorConfig(
-    timeout_min=4,
-    partition="ckpt",
-    slurm_array_parallelism=4,
-)
+sub_cfg = SubmititExecutorConfig()
+sub_cfg.timeout_min = 4
+sub_cfg.partition = "ckpt"
+sub_cfg.slurm_array_parallelism = 4
+
 
 executor = create_executor(sub_cfg)
 
