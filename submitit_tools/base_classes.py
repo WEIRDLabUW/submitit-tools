@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import submitit
 
-from configs.run_config import BaseRunConfig, WandbConfig
+from configs import BaseRunConfig, WandbConfig
 from typing import Union
 
 
@@ -50,10 +50,19 @@ class BaseJob(ABC):
     def __call__(self):
         pass
 
+    def _save_checkpoint(self):
+        """
+        This is a helper method that you can use to save the state of your job. Make sure to call it
+        periodically in your job incase it is killed and reaqueued.
+        """
+        pass
+
     def checkpoint(self, *args, **kwargs) -> submitit.helpers.DelayedSubmission:
         """
         This is a default method to checkpoint your job. This will run when the job times out
-        and just resubmits the job with the same arguments that the job was created with
+        and just resubmits the job with the same arguments that the job was created with. You should modify the
+        _save_checkpoint() method instead of this one.
         """
+        self._save_checkpoint()
         return submitit.helpers.DelayedSubmission(self, *args, **kwargs)
     

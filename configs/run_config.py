@@ -34,3 +34,8 @@ class ExampleRunConfig(BaseRunConfig):
     def __post_init__(self):
         self.checkpoint_path = f"add_{self.first_number}_to_{self.second_number}"
 
+@dataclass
+class ExampleMNESTConfig(BaseRunConfig):
+    network_size: int = 1
+    num_epochs: int = 10
+    batch_size: int = 32

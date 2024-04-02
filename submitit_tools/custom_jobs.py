@@ -1,0 +1,79 @@
+import os.path
+
+import submitit
+import torchvision
+
+from configs import ExampleMNESTConfig, WandbConfig
+from submitit_tools.base_classes import BaseJob
+import time
+import torch
+import torch.nn as nn
+
+
+class SimpleAddJob(BaseJob):
+    def __init__(self, run_config, wandb_config):
+        self.run_config = run_config
+        self.wandb_config = wandb_config
+
+    def __call__(self):
+        time.sleep(5)
+        return self.run_config.first_number + self.run_config.second_number
+
+
+class ExampleMNestJob(BaseJob):
+    def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):
+        assert WandbConfig is not None, "This Job uses Wandb"
+        self.run_config = run_config
+        self.wandb_config = wandb_config
+        dataset = torchvision.datasets.MNIST(
+            root="data",
+            train=True,
+            download=True,
+            transform=torchvision.transforms.ToTensor()
+        )
+        self.data_loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=run_config.batch_size,
+            shuffle=True
+        )
+        self.network = torch.nn.Sequential(
+            nn.Conv2d(1, 10, kernel_size=5),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+            nn.Conv2d(10, 20, kernel_size=5),
+            nn.MaxPool2d(2),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(320, 50),
+            nn.ReLU(),
+            nn.Linear(50, 10),
+            nn.Softmax()
+        )
+        self.optimizer = torch.optim.Adam(self.network.parameters())
+
+        if os.path.exists(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name)):
+            state_dict = torch.load(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name))
+            self.completed_epochs = state_dict["completed_epochs"]
+            self.network.load_state_dict(state_dict["network"])
+            self.optimizer.load_state_dict(state_dict["optimizer"])
+        else:
+            self.completed_epochs = 0
+
+    def __call__(self):
+        for epoch in range(self.completed_epochs, self.run_config.num_epochs):
+            for data, target in self.data_loader:
+                self.optimizer.zero_grad()
+                output = self.network(data)
+                loss = torch.nn.functional.cross_entropy(output, target)
+                loss.backward()
+                self.optimizer.step()
+            self.completed_epochs = epoch
+            self._save_checkpoint()
+
+    def _save_checkpoint(self):
+        state_dict = {
+            "completed_epochs": self.completed_epochs,
+            "network": self.network.state_dict(),
+            "optimizer": self.optimizer.state_dict()
+        }
+        torch.save(state_dict, os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))

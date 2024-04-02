@@ -1,6 +1,6 @@
 import submitit
 from typing import List, Type, Union
-from configs.run_config import BaseRunConfig, WandbConfig
+from configs import BaseRunConfig, WandbConfig
 from tqdm.auto import tqdm
 from submitit_tools.base_classes import BaseJob, JobBookKeeping
 

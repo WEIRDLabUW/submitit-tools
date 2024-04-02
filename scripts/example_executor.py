@@ -1,9 +1,8 @@
 import time
 
-from submitit_tools.example_job_class import MyJob
+from submitit_tools.custom_jobs import SimpleAddJob
 from submitit_tools.run_state import SubmititState
-from configs.run_config import ExampleRunConfig
-from configs.submitit_config import SubmititExecutorConfig
+from configs import  ExampleRunConfig, SubmititExecutorConfig
 from submitit_tools.create_objects import create_executor
 
 
@@ -23,7 +22,7 @@ for i in range(10):
 
 state = SubmititState(
     executor=executor,
-    job_cls=MyJob,
+    job_cls=SimpleAddJob,
     job_run_configs=run_configs,
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
