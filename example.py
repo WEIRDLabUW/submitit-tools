@@ -12,7 +12,7 @@ class TrainingCallable():
         time.sleep(20)
         return a + b
     
-   def checkpoint(self, a, b):
+    def checkpoint(self, a, b):
        return runhelpers.DelayedSubmission(self, a, b)
 
 

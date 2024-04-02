@@ -1,3 +1,5 @@
-submitit #wtf is this dep?
+submitit
+tqdm
+
 
 

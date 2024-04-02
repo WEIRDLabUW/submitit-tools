@@ -1,2 +1,4 @@
 outputs/
 .wandb/
+.vscode/
+.jetbrains/
