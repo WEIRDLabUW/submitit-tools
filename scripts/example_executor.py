@@ -19,7 +19,7 @@ executor = create_executor(sub_cfg)
 
 
 for i in range(10):
-    run_configs.append(ExampleRunConfig(first_number=0, second_number=0))
+    run_configs.append(ExampleRunConfig(first_number=0, second_number=i))
     wandb_configs.append(None)
 
 state = SubmititState(
