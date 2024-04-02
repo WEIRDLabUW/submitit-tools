@@ -1,8 +1,6 @@
-from abc import ABC
-from configs import RunConfig, WandbConfig
-import submitit
-from tqdm.auto import tqdm
-
+from abc import ABC, abstractmethod
+from configs.run_config import BaseRunConfig, WandbConfig
+from typing import Union
 
 
         
@@ -22,7 +20,7 @@ class BaseJob(ABC):
     """
     
     @abstractmethod
-    def __init__(self, run_config: RunConfig, wandb_config: Union[WandbConfig, None]):
+    def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
         pass
     
     @abstractmethod
