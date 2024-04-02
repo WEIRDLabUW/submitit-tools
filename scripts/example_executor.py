@@ -28,8 +28,12 @@ state = SubmititState(
     job_run_configs=run_configs,
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
+    max_retries=1,
 )
 
 while state.done() is False:
     state.update_state()
     time.sleep(1)
+
+for result in state.results:
+    print(result)
