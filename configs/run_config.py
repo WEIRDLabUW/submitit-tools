@@ -6,7 +6,7 @@ from typing import Union
 class BaseRunConfig:
     checkpoint_path: str = "checkpoints"
     checkpoint_name: str = "checkpoint.pt"
-    
+
     def __post_init__(self):
         # Do something here that is smart for the paramaters:
         pass

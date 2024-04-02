@@ -4,7 +4,7 @@ from submitit_tools.example_job_class import MyJob
 from submitit_tools.run_state import SubmititState
 from configs.run_config import ExampleRunConfig
 from configs.submitit_config import SubmititExecutorConfig
-from submitit_tools.create_executor import create_executor
+from submitit_tools.create_objects import create_executor
 
 
 run_configs = []
@@ -12,7 +12,6 @@ wandb_configs = []
 sub_cfg = SubmititExecutorConfig()
 sub_cfg.timeout_min = 4
 sub_cfg.partition = "ckpt"
-sub_cfg.slurm_array_parallelism = 4
 
 
 executor = create_executor(sub_cfg)
@@ -29,6 +28,7 @@ state = SubmititState(
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
     max_retries=1,
+    num_concurent_jobs=4
 )
 
 while state.done() is False:

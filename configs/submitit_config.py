@@ -18,4 +18,4 @@ class SubmititExecutorConfig(SubmititExecutorBaseConfig):
     cpus_per_task: int = 4  # This is the number of cpus per task
     mem_gb: int = 10  # This is the amount of ram required
     slurm_partition: str = "ckpt"  # This is the partition to which the job is submitted
-    slurm_array_parallelism: int = 10
+    # slurm_array_parallelism: int = 10

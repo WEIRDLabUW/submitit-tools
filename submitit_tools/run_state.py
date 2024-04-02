@@ -2,7 +2,7 @@ import submitit
 from typing import List, Type, Union
 from configs.run_config import BaseRunConfig, WandbConfig
 from tqdm.auto import tqdm
-from submitit_tools.base_classes import BaseJob
+from submitit_tools.base_classes import BaseJob, JobBookKeeping
 
 FAILED_JOB = "FAILED_JOB"
 
@@ -18,49 +18,52 @@ class SubmititState:
                  job_run_configs: List[BaseRunConfig],
                  job_wandb_configs: List[Union[WandbConfig, None]],
                  with_progress_bar: bool = False,
-                 max_retries: int = 30):
-        jobs = self._submit_job_list(executor, job_run_configs, job_wandb_configs, job_cls)
+                 max_retries: int = 30,
+                 num_concurent_jobs: int = 10):
 
         self.executor: submitit.AutoExecutor = executor
         self.job_cls: Type[BaseJob] = job_cls
         self.max_retries: int = max_retries
-        self.progress_bar = tqdm(total=len(jobs), desc="Job Progress") if with_progress_bar else None
+        self.progress_bar = tqdm(total=len(job_run_configs), desc="Job Progress") if with_progress_bar else None
 
-        # In progress jobs
-        self.jobs: List[submitit.Job] = jobs
-        self.job_run_configs: List[BaseRunConfig] = job_run_configs
-        self.job_wandb_configs: List[WandbConfig] = job_wandb_configs
-        self.retries = [0 for _ in range(len(jobs))]
+        self.pending_jobs: List[JobBookKeeping] = [
+            JobBookKeeping(run_config, wandb_config) for run_config, wandb_config in
+            zip(job_run_configs, job_wandb_configs)
+        ]
 
-        # For completed jobs
-        self.results = []
-        self.finished_run_configs: List[BaseRunConfig] = []
-        self.finished_wandb_configs: List[WandbConfig] = []
+        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * num_concurent_jobs
 
-    def _submit_job_list(self,
-                         executor: submitit.AutoExecutor,
-                         run_config_list: List[BaseRunConfig],
-                         wandb_config_list: List[WandbConfig],
-                         job_cls: Type[BaseJob],
-                         ) -> List[submitit.Job]:
-        assert len(run_config_list) == len(
-            wandb_config_list), "The length of the run_config_list and the wandb_config_list must be the same"
-        job_results = []
-        with executor.batch():
-            for run_config, wandb_config in zip(run_config_list, wandb_config_list):
-                job = executor.submit(job_cls(run_config, wandb_config))
-                job_results.append(job)
-        return job_results
+        self.finished_jobs: List[JobBookKeeping] = []
+
+        self._update_submitted_queue()
+
+    def _update_submitted_queue(self):
+        if len(self.pending_jobs) == 0:
+            # No pending jobs to add
+            return
+        for i in range(len(self.running_jobs)):
+            if self.running_jobs[i].job is not None:
+                # We already have a running job or no pending left at this index so don't do anything
+                continue
+            # We have to queue a job if we can
+            job = self.executor.submit(
+                self.job_cls(self.pending_jobs[0].run_config, self.pending_jobs[0].wandb_config)
+            )
+            self.running_jobs[i] = self.pending_jobs.pop(0)
+            self.running_jobs[i].job = job
 
     def update_state(self):
-        for i in reversed(range(len(self.jobs))):
-            job = self.jobs[i]
-            if not job.done():
+        for i in range(len(self.running_jobs)):
+            if self.running_jobs[i] is None:
+                continue
+
+            current_job = self.running_jobs[i]
+            if not current_job.done():
                 continue
 
             # The job is finished! It might have failed:
             try:
-                result = job.result()
+                result = current_job.result()
 
                 # If we get here, the job worked!
                 self._remove_job(i, result)
@@ -68,52 +71,53 @@ class SubmititState:
             except (submitit.core.utils.FailedJobError, submitit.core.utils.UncompletedJobError) as e:
 
                 # Requeue Logic
-                if self.retries[i] > self.max_retries:
+                if current_job.retries > self.max_retries:
                     self._remove_job(i, FAILED_JOB)
-                    print(f"Job {self.job_run_configs[i].checkpoint_path} failed after {self.max_retries} retries")
+                    print(f"Job {current_job.run_config.checkpoint_path} failed after {self.max_retries} retries")
                     print(f"Error: {e}")
                     continue
 
-                # TODO: I do not know how to requeue it within the scope of the executor
-                # I will just resubmit it
-                self.retries[i] += 1
-                self.jobs[i] = self.executor.submit(self.job_cls(self.job_run_configs[i], self.job_wandb_configs[i]))
+                # Resubmit the job
+                current_job.retries += 1
+                current_job.job = self.executor.submit(
+                    self.job_cls(current_job.run_config, current_job.wandb_config)
+                )
+
+        # If we ended up finishing a job, we can add a new one
+        self._update_submitted_queue()
 
     def _remove_job(self, idx, result):
-        job_name = self.job_run_configs[idx].checkpoint_path
-        self.results.append(result)
-        self.finished_run_configs.append(self.job_run_configs.pop(idx))
-        self.finished_wandb_configs.append(self.job_wandb_configs.pop(idx))
-
-        # Remove the job from the lists
-        self.retries.pop(idx)
-        self.jobs.pop(idx)
+        job_book_keeping = self.running_jobs[idx]
+        self.running_jobs[idx] = None
+        job_book_keeping.result = result
+        job_book_keeping.job = None
+        self.finished_jobs.append(job_book_keeping)
 
         # Update the progress bar
         if self.progress_bar is not None:
             self.progress_bar.update(1)
-            # if result == FAILED_JOB:
-            #     self.progress_bar.set_postfix(f"Failed job at {job_name}")
-            # else:
-            #     self.progress_bar.set_postfix(f"Finished job at {job_name}")
 
+    @property
     def tasks_left(self):
         """This method returns the number of tasks left
 
         Returns:
             int: The number of tasks left
         """
-        return len(self.jobs)
+        return len(self.pending_jobs) + sum(1 for job in self.running_jobs if job is not None)
 
+    @property
     def done(self):
         """This method returns if the entire task is finished
 
         Returns:
             bool: True if the task is finished, False otherwise
         """
-        if len(self.jobs) == 0:
-            return True
-        return False
+        return len(self.pending_jobs) == 0 and all(job is None for job in self.running_jobs)
+
+    @property
+    def results(self):
+        return [job.result for job in self.finished_jobs]
 
     def __str__(self):
         result = ""

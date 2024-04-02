@@ -1,6 +1,12 @@
+from typing import Union
+
 import submitit
+
+from configs.run_config import WandbConfig
 from configs.submitit_config import SubmititExecutorConfig
 from dataclasses import asdict
+import wandb
+
 
 def create_executor(config: SubmititExecutorConfig):
     kwargs = asdict(config)
@@ -8,5 +14,12 @@ def create_executor(config: SubmititExecutorConfig):
     executor = submitit.AutoExecutor(folder=kwargs.pop("root_folder"))
 
     executor.update_parameters(**kwargs)
-    
+
     return executor
+
+
+def init_wandb(config: Union[WandbConfig, None]):
+    if config is None:
+        return
+    kwargs = asdict(config)
+    wandb.init(**kwargs)
