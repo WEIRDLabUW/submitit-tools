@@ -67,7 +67,7 @@ class ExampleMNestJob(BaseJob):
         init_wandb(self.wandb_config)
         print("wandb initalized")
 
-        wandb.config.update(asdict(self.run_config))
+#        wandb.config.update(asdict(self.run_config))
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
             for data, target in self.data_loader:

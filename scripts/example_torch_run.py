@@ -19,7 +19,7 @@ def generate_train_configs():
                 tags=["mnest", "test"],
                 notes="This is a test run",
                 resume="allow",
-                id=f"lr_{learning_rate}_bs_{batch_size}"
+                id=f"lr_{learning_rate}_bs_{batch_size}12"
             ))
     return job_configs, wandb_configs
 
