@@ -14,12 +14,10 @@ class JobBookKeeping:
         self.result = None
         self.retries: int = 0
 
-    @property
     def done(self):
         assert self.job is not None, "Called done on a book keeping that does not have a job"
         return self.job.done()
 
-    @property
     def result(self):
         assert self.job is not None, "Called result on a book keeping that does not have a job"
         return self.job.result()
