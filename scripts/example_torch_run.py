@@ -1,9 +1,6 @@
 import time
 from configs import SubmititExecutorConfig, ExampleMNESTConfig, WandbConfig
-from submitit_tools.create_objects import create_executor
-from submitit_tools.create_objects import create_executor
-from submitit_tools.run_state import SubmititState
-from submitit_tools.custom_jobs import ExampleMNestJob
+from submitit_tools import create_executor, SubmititState, ExampleMNestJob
 
 def generate_train_configs():
     wandb_configs = []
