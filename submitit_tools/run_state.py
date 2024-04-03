@@ -51,13 +51,15 @@ class SubmititState:
             )
             self.running_jobs[i] = self.pending_jobs.pop(0)
             self.running_jobs[i].job = job
-
+            assert job is not None, "Job is None"
     def update_state(self):
         for i in range(len(self.running_jobs)):
             if self.running_jobs[i] is None:
                 continue
 
             current_job = self.running_jobs[i]
+            assert current_job.job is not None, "Job is running but job is None"
+
             if not current_job.done():
                 continue
 
