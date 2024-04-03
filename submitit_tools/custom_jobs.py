@@ -15,7 +15,6 @@ import torch.nn as nn
 
 class SimpleAddJob(BaseJob):
     def __init__(self, run_config, wandb_config):
-        super().__init__(run_config, wandb_config)
         self.run_config = run_config
         self.wandb_config = wandb_config
 
@@ -26,7 +25,9 @@ class SimpleAddJob(BaseJob):
 
 class ExampleMNestJob(BaseJob):
     def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):
-        super().__init__(run_config, wandb_config)
+        os.makedirs(run_config.checkpoint_path, exist_ok=True)
+        self.run_config: ExampleMNESTConfig = run_config
+        self.wandb_config: WandbConfig = wandb_config
         assert WandbConfig is not None, "This Job uses Wandb"
         dataset = torchvision.datasets.MNIST(
             root="data",
@@ -64,6 +65,7 @@ class ExampleMNestJob(BaseJob):
 
     def __call__(self):
         init_wandb(self.wandb_config)
+        print("wandb initalized")
 
         wandb.config.update(asdict(self.run_config))
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):

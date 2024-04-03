@@ -42,9 +42,7 @@ class BaseJob(ABC):
 
     @abstractmethod
     def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
-        os.makedirs(run_config.checkpoint_path, exist_ok=True)
-        self.run_config: BaseRunConfig = run_config
-        self.wandb_config: Union[WandbConfig, None] = wandb_config
+        pass
 
     @abstractmethod
     def __call__(self):
