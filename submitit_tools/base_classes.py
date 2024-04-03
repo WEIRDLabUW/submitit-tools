@@ -48,8 +48,7 @@ class BaseJob(ABC):
 
     @abstractmethod
     def __call__(self):
-        if self.wandb_config is not None:
-            init_wandb(self.wandb_config)
+        pass
 
     def _save_checkpoint(self):
         """

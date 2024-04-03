@@ -1,4 +1,5 @@
 import os.path
+from dataclasses import asdict
 
 import submitit
 import torchvision
@@ -62,8 +63,9 @@ class ExampleMNestJob(BaseJob):
             self.completed_epochs = 0
 
     def __call__(self):
-        super().__call__()
-        wandb.config.update(self.run_config)
+        init_wandb(self.wandb_config)
+
+        wandb.config.update(asdict(self.run_config))
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
             for data, target in self.data_loader:
@@ -77,6 +79,7 @@ class ExampleMNestJob(BaseJob):
             wandb.log({"epoch_loss": epoch_loss})
             self.completed_epochs = epoch
             self._save_checkpoint()
+        return f"Success! Paramaters: {asdict(self.run_config)}"
 
     def _save_checkpoint(self):
         state_dict = {
