@@ -43,7 +43,9 @@ def main():
         job_cls=ExampleMNestJob,
         job_run_configs=job_configs,
         job_wandb_configs=wandb_configs,
-        with_progress_bar=True
+        with_progress_bar=True,
+        max_retries=1,
+        num_concurent_jobs=4
     )
     while state.done() is False:
         state.update_state()
