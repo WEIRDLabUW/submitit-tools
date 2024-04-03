@@ -2,7 +2,9 @@ import os.path
 
 import submitit
 import torchvision
+import wandb
 
+from submitit_tools.create_objects import init_wandb
 from configs import ExampleMNESTConfig, WandbConfig
 from submitit_tools.base_classes import BaseJob
 import time
@@ -25,6 +27,7 @@ class ExampleMNestJob(BaseJob):
         assert WandbConfig is not None, "This Job uses Wandb"
         self.run_config = run_config
         self.wandb_config = wandb_config
+        init_wandb(wandb_config)
         dataset = torchvision.datasets.MNIST(
             root="data",
             train=True,
@@ -61,12 +64,16 @@ class ExampleMNestJob(BaseJob):
 
     def __call__(self):
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
+            epoch_loss = 0
             for data, target in self.data_loader:
                 self.optimizer.zero_grad()
                 output = self.network(data)
                 loss = torch.nn.functional.cross_entropy(output, target)
                 loss.backward()
                 self.optimizer.step()
+                epoch_loss += loss.item()
+            epoch_loss /= len(self.data_loader)
+            wandb.log({"epoch_loss": epoch_loss})
             self.completed_epochs = epoch
             self._save_checkpoint()
 

@@ -106,7 +106,6 @@ class SubmititState:
         """
         return len(self.pending_jobs) + sum(1 for job in self.running_jobs if job is not None)
 
-    @property
     def done(self):
         """This method returns if the entire task is finished
 
