@@ -5,6 +5,8 @@ import os
 from configs import BaseRunConfig, WandbConfig
 from typing import Union
 
+from submitit_tools.create_objects import init_wandb
+
 
 class JobBookKeeping:
     def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
@@ -38,12 +40,16 @@ class BaseJob(ABC):
     This means you MUST implement your own checkpointing.
     """
 
+    @abstractmethod
     def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
         os.makedirs(run_config.checkpoint_path, exist_ok=True)
+        self.run_config: BaseRunConfig = run_config
+        self.wandb_config: Union[WandbConfig, None] = wandb_config
 
     @abstractmethod
     def __call__(self):
-        pass
+        if self.wandb_config is not None:
+            init_wandb(self.wandb_config)
 
     def _save_checkpoint(self):
         """

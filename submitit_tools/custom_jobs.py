@@ -27,8 +27,6 @@ class ExampleMNestJob(BaseJob):
     def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):
         super().__init__(run_config, wandb_config)
         assert WandbConfig is not None, "This Job uses Wandb"
-        self.run_config = run_config
-        self.wandb_config = wandb_config
         dataset = torchvision.datasets.MNIST(
             root="data",
             train=True,
@@ -64,7 +62,8 @@ class ExampleMNestJob(BaseJob):
             self.completed_epochs = 0
 
     def __call__(self):
-        init_wandb(self.wandb_config)
+        super().__call__()
+        wandb.config.update(self.run_config)
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
             for data, target in self.data_loader:
