@@ -1,2 +1,2 @@
-from run_config import *
-from submitit_config import *
+from .run_config import *
+from .submitit_config import *
