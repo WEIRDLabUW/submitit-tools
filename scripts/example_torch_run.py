@@ -53,3 +53,6 @@ def main():
 
     for result in state.results:
         print(result)
+
+if __name__ == "__main__":
+    main()
