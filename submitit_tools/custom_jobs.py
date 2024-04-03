@@ -14,6 +14,7 @@ import torch.nn as nn
 
 class SimpleAddJob(BaseJob):
     def __init__(self, run_config, wandb_config):
+        super().__init__(run_config, wandb_config)
         self.run_config = run_config
         self.wandb_config = wandb_config
 
@@ -24,6 +25,7 @@ class SimpleAddJob(BaseJob):
 
 class ExampleMNestJob(BaseJob):
     def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):
+        super().__init__(run_config, wandb_config)
         assert WandbConfig is not None, "This Job uses Wandb"
         self.run_config = run_config
         self.wandb_config = wandb_config

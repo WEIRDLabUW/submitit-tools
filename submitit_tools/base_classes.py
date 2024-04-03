@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import submitit
-
+import os
 from configs import BaseRunConfig, WandbConfig
 from typing import Union
 
@@ -23,8 +23,6 @@ class JobBookKeeping:
         return self.job.result()
 
 
-
-        
 class BaseJob(ABC):
     """
     This class is what you should super class to create your own custom job.
@@ -39,11 +37,10 @@ class BaseJob(ABC):
     job is on the checkpoint partition, then this is not called, and only if timed out
     This means you MUST implement your own checkpointing.
     """
-    
-    @abstractmethod
+
     def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
-        pass
-    
+        os.makedirs(run_config.checkpoint_path, exist_ok=True)
+
     @abstractmethod
     def __call__(self):
         pass
@@ -63,4 +60,3 @@ class BaseJob(ABC):
         """
         self._save_checkpoint()
         return submitit.helpers.DelayedSubmission(self, *args, **kwargs)
-    
