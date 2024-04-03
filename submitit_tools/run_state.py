@@ -65,7 +65,7 @@ class SubmititState:
 
             # The job is finished! It might have failed:
             try:
-                result = current_job.result()
+                result = current_job.job.result()
 
                 # If we get here, the job worked!
                 self._remove_job(i, result)
