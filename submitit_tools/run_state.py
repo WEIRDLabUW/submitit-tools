@@ -42,7 +42,7 @@ class SubmititState:
             # No pending jobs to add
             return
         for i in range(len(self.running_jobs)):
-            if self.running_jobs[i].job is not None:
+            if self.running_jobs[i] is not None:
                 # We already have a running job or no pending left at this index so don't do anything
                 continue
             # We have to queue a job if we can
