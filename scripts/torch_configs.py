@@ -1,25 +1,21 @@
-import os.path
-import time
-from dataclasses import asdict
-
+import os
+from dataclasses import dataclass, asdict
 import torch
 import torch.nn as nn
 import torchvision
 import wandb
 
-from submitit_configs import *
-from submitit_tools.base_classes import BaseJob
+from submitit_configs import BaseRunConfig, WandbConfig, run_config
+from submitit_tools import BaseJob
 
 
-class SimpleAddJob(BaseJob):
-    def __init__(self, run_config: ExampleRunConfig, wandb_config: WandbConfig):
-        self.run_config = run_config
-        self.wandb_config = wandb_config
+# This is an example of a run config that you can use to run a simple addition task and log the output
 
-    def __call__(self):
-        time.sleep(5)
-        return self.run_config.first_number + self.run_config.second_number
-
+@dataclass
+class ExampleMNESTConfig(BaseRunConfig):
+    learning_rate: float = 0.001
+    num_epochs: int = 4
+    batch_size: int = 32
 
 class ExampleMNestJob(BaseJob):
     def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):

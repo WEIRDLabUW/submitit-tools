@@ -1,9 +1,27 @@
 import time
+from dataclasses import dataclass
 
-from submitit_tools.custom_jobs import SimpleAddJob
-from submitit_tools.run_state import SubmititState
-from submitit_configs import  ExampleRunConfig, SubmititExecutorConfig
-from submitit_tools.create_objects import create_executor
+from submitit_tools import SubmititState, create_executor, BaseJob
+from submitit_configs import SubmititExecutorConfig, BaseRunConfig
+
+
+@dataclass
+class ExampleRunConfig(BaseRunConfig):
+    first_number: int = 1
+    second_number: int = 2
+
+    def __post_init__(self):
+        self.checkpoint_path = f"add_{self.first_number}_to_{self.second_number}"
+
+
+class SimpleAddJob(BaseJob):
+    def __init__(self, run_config: ExampleRunConfig, wandb_config: WandbConfig):
+        self.run_config = run_config
+        self.wandb_config = wandb_config
+
+    def __call__(self):
+        time.sleep(5)
+        return self.run_config.first_number + self.run_config.second_number
 
 
 run_configs = []
@@ -12,9 +30,7 @@ sub_cfg = SubmititExecutorConfig()
 sub_cfg.timeout_min = 4
 sub_cfg.partition = "ckpt"
 
-
 executor = create_executor(sub_cfg)
-
 
 for i in range(10):
     run_configs.append(ExampleRunConfig(first_number=0, second_number=i))
