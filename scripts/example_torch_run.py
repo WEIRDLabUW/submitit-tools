@@ -62,7 +62,7 @@ class ExampleMNestJob(BaseJob):
         )
         self.data_loader = torch.utils.data.DataLoader(
             dataset,
-            batch_size=run_config.batch_size,
+            batch_size=self.run_config.batch_size,
             shuffle=True
         )
 
