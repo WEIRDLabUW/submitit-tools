@@ -1,19 +1,18 @@
 import os.path
+import time
 from dataclasses import asdict
 
+import torch
+import torch.nn as nn
 import torchvision
 import wandb
 
-from submitit_tools.create_objects import init_wandb
 from submitit_configs import *
 from submitit_tools.base_classes import BaseJob
-import time
-import torch
-import torch.nn as nn
 
 
 class SimpleAddJob(BaseJob):
-    def __init__(self, run_config: ExampleRunConfig , wandb_config: WandbConfig):
+    def __init__(self, run_config: ExampleRunConfig, wandb_config: WandbConfig):
         self.run_config = run_config
         self.wandb_config = wandb_config
 
@@ -56,7 +55,8 @@ class ExampleMNestJob(BaseJob):
         self.optimizer = torch.optim.Adam(self.network.parameters())
 
         if os.path.exists(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name)):
-            state_dict = torch.load(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name))
+            state_dict = torch.load(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name),
+                                    map_location=torch.device('cpu'))
             self.completed_epochs = state_dict["completed_epochs"]
             self.network.load_state_dict(state_dict["network"])
             self.optimizer.load_state_dict(state_dict["optimizer"])
