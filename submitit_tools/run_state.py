@@ -38,6 +38,9 @@ class SubmititState:
         self._update_submitted_queue()
 
     def _update_submitted_queue(self):
+        """
+        Private helper method to move jobs from pending to running if possible
+        """
         for i in range(len(self.running_jobs)):
             if len(self.pending_jobs) == 0:
                 # No pending jobs to add
@@ -55,6 +58,11 @@ class SubmititState:
             assert job is not None, "Job is None"
 
     def update_state(self):
+        """
+        This method is called to update the current state of this object.
+        It both finishes completed jobs, as well as starts up the next jobs
+        in the queue if possible
+        """
         for i in range(len(self.running_jobs)):
             if self.running_jobs[i] is None:
                 continue
@@ -91,6 +99,9 @@ class SubmititState:
         self._update_submitted_queue()
 
     def _remove_job(self, idx, result):
+        """Private helper method to remove a job from the currently working
+        on queue
+        """
         job_book_keeping = self.running_jobs[idx]
         self.running_jobs[idx] = None
         job_book_keeping.result = result
@@ -120,6 +131,9 @@ class SubmititState:
 
     @property
     def results(self):
+        """
+        Returns the results in the order in which they were completed
+        """
         return [job.result for job in self.finished_jobs]
 
     def __str__(self):
