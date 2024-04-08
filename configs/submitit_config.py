@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -18,6 +18,6 @@ class SubmititExecutorConfig(SubmititExecutorBaseConfig):
     slurm_partition: str = "ckpt"  # This is the partition to which the job is submitted
     
     # This is the extra paramater dictionary where args become SBATCH commands
-    slurm_additional_parameters: dict = {
+    slurm_additional_parameters: dict = field(default_factory= lambda: {
         "gpus": "a40:1" # This is gpu_type:number
-    }
+    })
