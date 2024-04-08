@@ -51,12 +51,11 @@ class ExampleMNestJob(BaseJob):
             nn.ReLU(),
             nn.Linear(50, 10),
             nn.Softmax()
-        )
+        ).to("cuda")
         self.optimizer = torch.optim.Adam(self.network.parameters())
 
         if os.path.exists(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name)):
-            state_dict = torch.load(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name),
-                                    map_location=torch.device('cpu'))
+            state_dict = torch.load(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name))
             self.completed_epochs = state_dict["completed_epochs"]
             self.network.load_state_dict(state_dict["network"])
             self.optimizer.load_state_dict(state_dict["optimizer"])
@@ -66,7 +65,6 @@ class ExampleMNestJob(BaseJob):
     def __call__(self):
         super().__call__()
 
-        self.network = self.network.to("cuda")
 
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
