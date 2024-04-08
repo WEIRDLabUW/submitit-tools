@@ -1,7 +1,6 @@
 import os.path
 from dataclasses import asdict
 
-import submitit
 import torchvision
 import wandb
 
