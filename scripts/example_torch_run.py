@@ -1,7 +1,7 @@
 import time
 from configs import SubmititExecutorConfig, ExampleMNESTConfig, WandbConfig
 from submitit_tools import create_executor, SubmititState, ExampleMNestJob
-
+import wandb
 def generate_train_configs():
     wandb_configs = []
     job_configs = []
@@ -19,7 +19,7 @@ def generate_train_configs():
                 tags=["mnest", "test"],
                 notes="This is a test run",
                 resume="allow",
-                id=f"lr_{learning_rate}_bs_{batch_size}12"
+                id=wandb.util.generate_id()
             ))
     return job_configs, wandb_configs
 
