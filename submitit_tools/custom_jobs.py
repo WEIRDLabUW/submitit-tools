@@ -65,7 +65,7 @@ class ExampleMNestJob(BaseJob):
 
     def __call__(self):
         super().__call__()
-
+        self.network.to("cuda")
 
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
@@ -86,7 +86,7 @@ class ExampleMNestJob(BaseJob):
     def _save_checkpoint(self):
         state_dict = {
             "completed_epochs": self.completed_epochs,
-            "network": self.network.to("cpu").state_dict(),
+            "network": self.network.state_dict(),
             "optimizer": self.optimizer.state_dict()
         }
         torch.save(state_dict, os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))
