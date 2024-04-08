@@ -68,7 +68,7 @@ class ExampleMNestJob(BaseJob):
         print("wandb initalized")
         self.network = self.network.to("cuda")
 
-#        wandb.config.update(asdict(self.run_config))
+        wandb.config.update(asdict(self.run_config))
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
             for data, target in self.data_loader:
