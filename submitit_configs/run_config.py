@@ -37,5 +37,5 @@ class ExampleRunConfig(BaseRunConfig):
 @dataclass
 class ExampleMNESTConfig(BaseRunConfig):
     learning_rate: float = 0.001
-    num_epochs: int = 10
+    num_epochs: int = 4
     batch_size: int = 32
