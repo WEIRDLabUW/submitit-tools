@@ -1,5 +1,5 @@
 import time
-from configs import SubmititExecutorConfig, ExampleMNESTConfig, WandbConfig
+from submitit_configs import SubmititExecutorConfig, ExampleMNESTConfig, WandbConfig
 from submitit_tools import create_executor, SubmititState, ExampleMNestJob
 import wandb
 def generate_train_configs():

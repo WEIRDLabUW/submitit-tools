@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
+from dataclasses import asdict
 
 import submitit
 import os
-from configs import BaseRunConfig, WandbConfig
+
+import wandb
+
+from submitit_configs import BaseRunConfig, WandbConfig
 from typing import Union
 
 from submitit_tools.create_objects import init_wandb
@@ -42,11 +46,15 @@ class BaseJob(ABC):
 
     @abstractmethod
     def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
-        pass
+        os.makedirs(run_config.checkpoint_path, exist_ok=True)
+        self.run_config: BaseRunConfig = run_config
+        self.wandb_config: WandbConfig = wandb_config
 
     @abstractmethod
     def __call__(self):
-        pass
+        if self.wandb_config is not None:
+            init_wandb(self.wandb_config)
+            wandb.config.update(asdict(self.run_config))
 
     def _save_checkpoint(self):
         """

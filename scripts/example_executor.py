@@ -2,7 +2,7 @@ import time
 
 from submitit_tools.custom_jobs import SimpleAddJob
 from submitit_tools.run_state import SubmititState
-from configs import  ExampleRunConfig, SubmititExecutorConfig
+from submitit_configs import  ExampleRunConfig, SubmititExecutorConfig
 from submitit_tools.create_objects import create_executor
 
 

@@ -5,7 +5,7 @@ import torchvision
 import wandb
 
 from submitit_tools.create_objects import init_wandb
-from configs import ExampleMNESTConfig, WandbConfig
+from submitit_configs import *
 from submitit_tools.base_classes import BaseJob
 import time
 import torch
@@ -13,7 +13,7 @@ import torch.nn as nn
 
 
 class SimpleAddJob(BaseJob):
-    def __init__(self, run_config, wandb_config):
+    def __init__(self, run_config: ExampleRunConfig , wandb_config: WandbConfig):
         self.run_config = run_config
         self.wandb_config = wandb_config
 
@@ -24,9 +24,10 @@ class SimpleAddJob(BaseJob):
 
 class ExampleMNestJob(BaseJob):
     def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):
-        os.makedirs(run_config.checkpoint_path, exist_ok=True)
+        super().__init__(run_config, wandb_config)
+        # Not needed, but helps with typing in pycharm
         self.run_config: ExampleMNESTConfig = run_config
-        self.wandb_config: WandbConfig = wandb_config
+
         assert WandbConfig is not None, "This Job uses Wandb"
         dataset = torchvision.datasets.MNIST(
             root="data",
@@ -63,11 +64,10 @@ class ExampleMNestJob(BaseJob):
             self.completed_epochs = 0
 
     def __call__(self):
-        init_wandb(self.wandb_config)
-        print("wandb initalized")
+        super().__call__()
+
         self.network = self.network.to("cuda")
 
-        wandb.config.update(asdict(self.run_config))
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
             for data, target in self.data_loader:
