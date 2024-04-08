@@ -15,7 +15,7 @@ pip install -e .
 ## Usage:
 
 To see examples that are concrete, **run** `python scripts/example_torch_run.py`. This is a good entry point and will train up
-9 mnest networks.
+9 mnest networks. Note you will need torch and torchvision.
 
 When you are using this as a submodule, you should only need to define the job class, run config and change config paramaters
 when you instantiate them. 
@@ -96,7 +96,15 @@ state = SubmititState(
 
 ```
 
-Then you can just use the runstate to monitor the progress and then process the results at the end. 
+Then you can use the SubmititState to monitor the progress and process the results at the end. In my main script, I recommend this:
+```python
+    while state.done() is False:
+        state.update_state()
+        time.sleep(1)
+
+    for result in state.results:
+        # Do something with the result. I am not sure that you need to have results, but you can use this to check if the job succeeded or not
+```
 ## Notes and todos:
 -  Test if the jobs are recoverable if interrupted or stopped 
 -  Handle job crashing vs slurm errors differently
