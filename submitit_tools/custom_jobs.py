@@ -66,11 +66,13 @@ class ExampleMNestJob(BaseJob):
     def __call__(self):
         init_wandb(self.wandb_config)
         print("wandb initalized")
+        self.network = self.network.to("cuda")
 
 #        wandb.config.update(asdict(self.run_config))
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
             for data, target in self.data_loader:
+                data, target = data.to("cuda"), target.to("cuda")
                 self.optimizer.zero_grad()
                 output = self.network(data)
                 loss = torch.nn.functional.cross_entropy(output, target)
