@@ -2,8 +2,8 @@ from typing import Union
 
 import submitit
 
-from configs.run_config import WandbConfig
-from configs.submitit_config import SubmititExecutorConfig
+from submitit_configs.run_config import WandbConfig
+from submitit_configs.submitit_config import SubmititExecutorConfig
 from dataclasses import asdict
 import wandb
 
