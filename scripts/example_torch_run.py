@@ -12,64 +12,6 @@ from submitit_tools import BaseJob
 import wandb
 
 
-def generate_train_configs():
-    wandb_configs = []
-    job_configs = []
-    for learning_rate in [0.001, 0.01, 0.1]:
-        for batch_size in [32, 64, 128]:
-            job_configs.append(ExampleMNESTConfig(
-                learning_rate=learning_rate,
-                batch_size=batch_size,
-                checkpoint_name=f"lr_{learning_rate}_bs_{batch_size}.pt",
-                checkpoint_path="mnest_checkpoints"
-            ))
-            wandb_configs.append(WandbConfig(
-                project="mnest_test",
-                name=f"lr_{learning_rate}_bs_{batch_size}",
-                tags=["mnest", "test"],
-                notes="This is a test run",
-                resume="allow",
-                id=wandb.util.generate_id()
-            ))
-    return job_configs, wandb_configs
-
-
-def make_executor():
-    config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
-                                    slurm_name="submitit-test",
-                                    timeout_min=60 * 2,
-                                    cpus_per_task=16,
-                                    mem_gb=24)
-    return create_executor(config)
-
-
-def main():
-    executor = make_executor()
-    job_configs, wandb_configs = generate_train_configs()
-    state = SubmititState(
-        executor=executor,
-        job_cls=ExampleMNestJob,
-        job_run_configs=job_configs,
-        job_wandb_configs=wandb_configs,
-        with_progress_bar=True,
-        max_retries=1,
-        num_concurent_jobs=4
-    )
-    while state.done() is False:
-        state.update_state()
-        time.sleep(1)
-
-    for result in state.results:
-        print(result)
-
-
-if __name__ == "__main__":
-    main()
-
-# Define the configs for the run
-
-
-
 # This is an example of a run config that you can use to run a simple addition task and log the output
 
 @dataclass
@@ -161,3 +103,58 @@ class ExampleMNestJob(BaseJob):
             "optimizer": self.optimizer.state_dict()
         }
         torch.save(state_dict, os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))
+
+def generate_train_configs():
+    wandb_configs = []
+    job_configs = []
+    for learning_rate in [0.001, 0.01, 0.1]:
+        for batch_size in [32, 64, 128]:
+            job_configs.append(ExampleMNESTConfig(
+                learning_rate=learning_rate,
+                batch_size=batch_size,
+                checkpoint_name=f"lr_{learning_rate}_bs_{batch_size}.pt",
+                checkpoint_path="mnest_checkpoints"
+            ))
+            wandb_configs.append(WandbConfig(
+                project="mnest_test",
+                name=f"lr_{learning_rate}_bs_{batch_size}",
+                tags=["mnest", "test"],
+                notes="This is a test run",
+                resume="allow",
+                id=wandb.util.generate_id()
+            ))
+    return job_configs, wandb_configs
+
+
+def make_executor():
+    config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
+                                    slurm_name="submitit-test",
+                                    timeout_min=60 * 2,
+                                    cpus_per_task=16,
+                                    mem_gb=24)
+    return create_executor(config)
+
+
+def main():
+    executor = make_executor()
+    job_configs, wandb_configs = generate_train_configs()
+    state = SubmititState(
+        executor=executor,
+        job_cls=ExampleMNestJob,
+        job_run_configs=job_configs,
+        job_wandb_configs=wandb_configs,
+        with_progress_bar=True,
+        max_retries=1,
+        num_concurent_jobs=4
+    )
+    while state.done() is False:
+        state.update_state()
+        time.sleep(1)
+
+    for result in state.results:
+        print(result)
+
+
+if __name__ == "__main__":
+    main()
+
