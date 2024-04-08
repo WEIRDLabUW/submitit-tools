@@ -1,7 +1,8 @@
 import time
 from submitit_configs import SubmititExecutorConfig, WandbConfig
-from submitit_tools import create_executor, SubmititState, ExampleMNestJob
-from torch_configs import ExampleMNESTConfig
+from submitit_tools import create_executor, SubmititState
+from torch_configs import ExampleMNESTConfig, ExampleMNestJob
+
 
 import wandb
 def generate_train_configs():
