@@ -49,6 +49,10 @@ class BaseJob(ABC):
         os.makedirs(run_config.checkpoint_path, exist_ok=True)
         self.run_config: BaseRunConfig = run_config
         self.wandb_config: WandbConfig = wandb_config
+        if os.path.exists(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name)):
+            self.loaded_checkpoint = False
+        else:
+            self.loaded_checkpoint = True
 
     @abstractmethod
     def __call__(self):

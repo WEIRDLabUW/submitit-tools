@@ -38,10 +38,11 @@ class SubmititState:
         self._update_submitted_queue()
 
     def _update_submitted_queue(self):
-        if len(self.pending_jobs) == 0:
-            # No pending jobs to add
-            return
         for i in range(len(self.running_jobs)):
+            if len(self.pending_jobs) == 0:
+                # No pending jobs to add
+                return
+
             if self.running_jobs[i] is not None:
                 # We already have a running job or no pending left at this index so don't do anything
                 continue
@@ -52,6 +53,7 @@ class SubmititState:
             self.running_jobs[i] = self.pending_jobs.pop(0)
             self.running_jobs[i].job = job
             assert job is not None, "Job is None"
+
     def update_state(self):
         for i in range(len(self.running_jobs)):
             if self.running_jobs[i] is None:
