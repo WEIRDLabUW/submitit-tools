@@ -55,17 +55,22 @@ class ExampleMNestJob(BaseJob):
         self.optimizer = torch.optim.Adam(self.network.parameters())
 
         if os.path.exists(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name)):
-            state_dict = torch.load(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name),
-                                    map_location=torch.device("cpu"))
-            self.completed_epochs = state_dict["completed_epochs"]
-            self.network.load_state_dict(state_dict["network"])
-            self.optimizer.load_state_dict(state_dict["optimizer"])
+            self.loaded_checkpoint =  False
         else:
+            self.loaded_checkpoint = True
             self.completed_epochs = 0
 
     def __call__(self):
         super().__call__()
         self.network.to("cuda")
+
+        # Since no gpu in the init, have to load things here
+        if not self.loaded_checkpoint:
+            checkpoint = torch.load(os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))
+            self.completed_epochs = checkpoint["completed_epochs"]
+            self.network.load_state_dict(checkpoint["network"])
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+            self.loaded_checkpoint = True
 
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
             epoch_loss = 0
@@ -84,6 +89,8 @@ class ExampleMNestJob(BaseJob):
         return f"Success! Paramaters: {asdict(self.run_config)}"
 
     def _save_checkpoint(self):
+        if not self.loaded_checkpoint:
+            return
         state_dict = {
             "completed_epochs": self.completed_epochs,
             "network": self.network.state_dict(),
