@@ -5,7 +5,7 @@ but right now it is intended to be a submodule in your repository
 ## Installation
 Run the following commands to install it as a submodule:
 ```bash
-git submodule add https://github.com/WEIRDLabUW/submitit-tools.git
+git submodule add git@github.com:WEIRDLabUW/submitit-tools.git
 cd submitit-tools
 pip install -e .
 ```
