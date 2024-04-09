@@ -100,6 +100,7 @@ Then you can just use the runstate to monitor the progress and then process the 
 ## Notes and todos:
 -  Test if the jobs are recoverable if interrupted or stopped 
 -  Handle job crashing vs slurm errors differently
+- I think that it will crash a job if the checkpoint gets corrupted
 
 ### Notes:
 If a job crashes, there is no way to distinguish this between being preempted or just crashed

@@ -49,16 +49,25 @@ class BaseJob(ABC):
         os.makedirs(run_config.checkpoint_path, exist_ok=True)
         self.run_config: BaseRunConfig = run_config
         self.wandb_config: WandbConfig = wandb_config
-        if os.path.exists(os.path.join(run_config.checkpoint_path, run_config.checkpoint_name)):
-            self.loaded_checkpoint = False
-        else:
-            self.loaded_checkpoint = True
+        self.initialized = False
 
     @abstractmethod
     def __call__(self):
         if self.wandb_config is not None:
             init_wandb(self.wandb_config)
             wandb.config.update(asdict(self.run_config))
+
+        if not self.initialized:
+            self._initialize()
+            self.initialized = True
+
+    @abstractmethod
+    def _initialize(self):
+        """
+        This method is called by the call method and initalizes the object. Make sure to implement this
+        with all the field definitions that you need.
+        """
+        assert False, "This method must be implemented"
 
     def _save_checkpoint(self):
         """
@@ -73,5 +82,6 @@ class BaseJob(ABC):
         and just resubmits the job with the same arguments that the job was created with. You should modify the
         _save_checkpoint() method instead of this one.
         """
-        self._save_checkpoint()
+        if self.initialized:
+            self._save_checkpoint()
         return submitit.helpers.DelayedSubmission(self, *args, **kwargs)
