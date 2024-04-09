@@ -27,11 +27,21 @@ class ExampleMNestJob(BaseJob):
 
         # Not needed, but helps with typing in pycharm
         self.run_config: ExampleMNESTConfig = run_config
-
         assert WandbConfig is not None, "This Job uses Wandb"
 
-        # NOTE things that are in this init are not called async so everything should be fast
-        # and not block the main thread
+    def _initialize(self):
+        # Load the data:
+        dataset = torchvision.datasets.MNIST(
+            root="data",
+            train=True,
+            download=True,
+            transform=torchvision.transforms.ToTensor()
+        )
+        self.data_loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.run_config.batch_size,
+            shuffle=True
+        )
         self.completed_epochs = 0
         self.network = torch.nn.Sequential(
             nn.Conv2d(1, 10, kernel_size=5),
@@ -45,34 +55,18 @@ class ExampleMNestJob(BaseJob):
             nn.ReLU(),
             nn.Linear(50, 10),
             nn.Softmax()
-        )
+        ).to('cuda')
         self.optimizer = torch.optim.Adam(self.network.parameters())
 
-    def __call__(self):
-        # The super call loads wandb and initializes it
-        super().__call__()
-        self.network.to("cuda")
-
-        # Load the data:
-        dataset = torchvision.datasets.MNIST(
-            root="data",
-            train=True,
-            download=True,
-            transform=torchvision.transforms.ToTensor()
-        )
-        self.data_loader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=self.run_config.batch_size,
-            shuffle=True
-        )
-
-        # Since no gpu in the init, have to load things here
-        if not self.loaded_checkpoint:
+        if os.path.exists(os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name)):
             checkpoint = torch.load(os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))
             self.completed_epochs = checkpoint["completed_epochs"]
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
-            self.loaded_checkpoint = True
+
+    def __call__(self):
+        # The super call loads wandb and calls the _initalize method
+        super().__call__()
 
         # Run a standard training script
         for epoch in range(self.completed_epochs, self.run_config.num_epochs):
@@ -93,8 +87,9 @@ class ExampleMNestJob(BaseJob):
         return f"Success! Paramaters: {asdict(self.run_config)}"
 
     def _save_checkpoint(self):
-        # So that we do not overide a real checkpoint with a random init model
-        if not self.loaded_checkpoint:
+        # So that we do not overide a real checkpoint with a random init model. Not needed if you call
+        # only after the __call__ method has been called.
+        if not self.initialized:
             return
         # Save the checkpoing.
         state_dict = {
@@ -103,6 +98,7 @@ class ExampleMNestJob(BaseJob):
             "optimizer": self.optimizer.state_dict()
         }
         torch.save(state_dict, os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))
+
 
 def generate_train_configs():
     wandb_configs = []
@@ -157,4 +153,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

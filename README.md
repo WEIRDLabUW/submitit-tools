@@ -108,6 +108,7 @@ Then you can use the SubmititState to monitor the progress and process the resul
 ## Notes and todos:
 -  Test if the jobs are recoverable if interrupted or stopped 
 -  Handle job crashing vs slurm errors differently
+- I think that it will crash a job if the checkpoint gets corrupted
 
 ### Notes:
 If a job crashes, there is no way to distinguish this between being preempted or just crashed

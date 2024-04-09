@@ -31,7 +31,8 @@ class SubmititState:
             zip(job_run_configs, job_wandb_configs)
         ]
 
-        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * num_concurent_jobs
+        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurent_jobs if num_concurent_jobs > 0
+                                                                         else len(self.pending_jobs))
 
         self.finished_jobs: List[JobBookKeeping] = []
 
