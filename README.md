@@ -17,7 +17,7 @@ pip install -e .
 To see examples that are concrete, **run** `python scripts/example_torch_run.py`. This is a good entry point and will train up
 9 mnest networks. Note you will need torch and torchvision.
 
-When you are using this as a submodule, you should only need to define the job class, run config and change config paramaters
+When you are using this as a submodule, you should only need to define the job class, run config and change config parameters
 when you instantiate them. 
 ### More details below
 
@@ -37,7 +37,7 @@ class ExampleRunConfig(BaseRunConfig):
     def __post_init__(self):
         self.checkpoint_path = f"add_{self.first_number}_to_{self.second_number}"
 ```
-Then you have to create a job config which handles the core of your job:
+Then you have to create a job config that handles the core of your job:
 ```python
 from submitit_tools import BaseJob
 import os
@@ -47,26 +47,26 @@ class CustomJob(BaseJob):
     def __init__(self, run_config, wandb_config):
         # Initalizes some wandb stuff
         super().__init__(run_config, wandb_config)
-        # Initalize all of the fields that you want to checkpoint
-        
+
+    def _initialize(self):
+        # Write code to initialize all the fields in your class. This is automatically called.
+        # You also must include your checkpoint logic here to load a checkpoint if it exists
+       
                 
     def __call__(self):
+        # This handles the initialization and the wandb stuff
         super().__call__()
-        # Since no gpu in the init, have to load things here
-        if not self.loaded_checkpoint:
-            checkpoint = torch.load(os.path.join(self.run_config.checkpoint_path, self.run_config.checkpoint_name))
-            # Do stuff with the checkpoint
-            self.loaded_checkpoint = True
+
                     
         # Your job goes here, make sure to call the self._save_checkpoint() method
         # if wandb_config was not none, you can safely call wandb.log or other wandb functions 
         return result
     
     def _save_checkpoint(self):
-        # So that we do not overide a real checkpoint with a random init model
-        if not self.loaded_checkpoint:
+        # So that we do not override a real checkpoint with a random init model
+        if not self.initialized:
             return
-        # Save the checkpoing.
+        # Save the checkpoint.
 ```
 Then create an executor 
 ```python
