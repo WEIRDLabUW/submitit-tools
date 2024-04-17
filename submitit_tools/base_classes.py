@@ -54,7 +54,7 @@ class BaseJob(ABC):
     @abstractmethod
     def __call__(self):
         if self.wandb_config is not None:
-            wandb.init(asdict(self.wandb_config))
+            wandb.init(**asdict(self.wandb_config))
             wandb.config.update(asdict(self.job_config))
 
         if not self.initialized:
