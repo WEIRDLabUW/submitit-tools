@@ -19,12 +19,14 @@ class SubmititState:
                  job_run_configs: List[BaseJobConfig],
                  job_wandb_configs: List[Union[WandbConfig, None]],
                  with_progress_bar: bool = False,
+                 output_error_messages: bool = True,
                  max_retries: int = 5,
                  num_concurent_jobs: int = 10):
 
         self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
         self.job_cls: Type[BaseJob] = job_cls
         self.max_retries: int = max_retries
+        self.output_error_messages = output_error_messages
         self.progress_bar = tqdm(total=len(job_run_configs), desc="Job Progress") if with_progress_bar else None
 
         self.pending_jobs: List[JobBookKeeping] = [
@@ -94,7 +96,9 @@ class SubmititState:
                 self._remove_job(i, result)
 
             except (submitit.core.utils.FailedJobError, submitit.core.utils.UncompletedJobError) as e:
-
+                if self.output_error_messages:
+                    print(f"Job {current_job.job_config.checkpoint_path} failed")
+                    print(f"Error: {e}")
                 # Requeue Logic
                 if current_job.retries > self.max_retries:
                     self._remove_job(i, FAILED_JOB)
