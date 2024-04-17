@@ -27,10 +27,10 @@ class ExampleExecutorConfig(SubmititExecutorConfig):
 # 3. Programatically describe how you will vary each Base Config.
 # For example, sweep the second number value from 0-9
 # Instantiate a list of job configs with corresponding wandb configs.
-run_configs = []
+job_configs = []
 wandb_configs = []
 for i in range(10):
-    run_configs.append(
+    job_configs.append(
         SimpleAddJobConfig(
             first_number=0,
             second_number=i,
@@ -63,7 +63,7 @@ class SimpleAddJob(BaseJob):
 state = SubmititState(
     job_cls=SimpleAddJob,
     executor_config=ExampleExecutorConfig(),
-    job_run_configs=run_configs,
+    job_run_configs=job_configs,
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
     max_retries=1,

@@ -30,7 +30,7 @@ class SubmititState:
         self.progress_bar = tqdm(total=len(job_run_configs), desc="Job Progress") if with_progress_bar else None
 
         self.pending_jobs: List[JobBookKeeping] = [
-            JobBookKeeping(run_config, wandb_config) for run_config, wandb_config in
+            JobBookKeeping(job_config, wandb_config) for job_config, wandb_config in
             zip(job_run_configs, job_wandb_configs)
         ]
 
