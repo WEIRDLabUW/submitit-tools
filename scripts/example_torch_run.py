@@ -1,13 +1,13 @@
 import time
 from submitit_configs import SubmititExecutorConfig, WandbConfig
-from submitit_tools import create_executor, SubmititState
+from submitit_tools import init_executor, SubmititState
 import os
 from dataclasses import dataclass, asdict
 import torch
 import torch.nn as nn
 import torchvision
 
-from submitit_configs import BaseRunConfig, WandbConfig, run_config
+from submitit_configs import BaseJobConfig, WandbConfig, run_config
 from submitit_tools import BaseJob
 import wandb
 
@@ -15,18 +15,18 @@ import wandb
 # This is an example of a run config that you can use to run a simple addition task and log the output
 
 @dataclass
-class ExampleMNESTConfig(BaseRunConfig):
+class MNISTRunConfig(BaseJobConfig):
     learning_rate: float = 0.001
     num_epochs: int = 4
     batch_size: int = 32
 
 
-class ExampleMNestJob(BaseJob):
-    def __init__(self, run_config: ExampleMNESTConfig, wandb_config: WandbConfig):
+class ExampleMNISTJob(BaseJob):
+    def __init__(self, run_config: MNISTRunConfig, wandb_config: WandbConfig):
         super().__init__(run_config, wandb_config)
 
         # Not needed, but helps with typing in pycharm
-        self.run_config: ExampleMNESTConfig = run_config
+        self.run_config: MNISTRunConfig = run_config
         assert WandbConfig is not None, "This Job uses Wandb"
 
     def _initialize(self):
@@ -105,16 +105,16 @@ def generate_train_configs():
     job_configs = []
     for learning_rate in [0.001, 0.01, 0.1]:
         for batch_size in [32, 64, 128]:
-            job_configs.append(ExampleMNESTConfig(
+            job_configs.append(MNISTRunConfig(
                 learning_rate=learning_rate,
                 batch_size=batch_size,
                 checkpoint_name=f"lr_{learning_rate}_bs_{batch_size}.pt",
-                checkpoint_path="mnest_checkpoints"
+                checkpoint_path="mnist_checkpoints"
             ))
             wandb_configs.append(WandbConfig(
-                project="mnest_test",
+                project="mnist_test",
                 name=f"lr_{learning_rate}_bs_{batch_size}",
-                tags=["mnest", "test"],
+                tags=["mnist", "test"],
                 notes="This is a test run",
                 resume="allow",
                 id=wandb.util.generate_id()
@@ -128,7 +128,7 @@ def make_executor():
                                     timeout_min=60 * 2,
                                     cpus_per_task=16,
                                     mem_gb=24)
-    return create_executor(config)
+    return init_executor(config)
 
 
 def main():
@@ -136,7 +136,7 @@ def main():
     job_configs, wandb_configs = generate_train_configs()
     state = SubmititState(
         executor=executor,
-        job_cls=ExampleMNestJob,
+        job_cls=ExampleMNISTJob,
         job_run_configs=job_configs,
         job_wandb_configs=wandb_configs,
         with_progress_bar=True,

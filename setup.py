@@ -1,5 +1,11 @@
 from setuptools import setup, find_packages
-requirements = ["submitit", "tqdm", "wandb"]
+
+requirements = [
+    "submitit",
+    "tqdm",
+    "wandb"
+]
+
 setup(
     name='submitit_tools',
     packages=find_packages(),

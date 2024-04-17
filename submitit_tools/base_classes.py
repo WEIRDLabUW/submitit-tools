@@ -6,15 +6,13 @@ import os
 
 import wandb
 
-from submitit_configs import BaseRunConfig, WandbConfig
+from configs import BaseJobConfig, WandbConfig
 from typing import Union
-
-from submitit_tools.create_objects import init_wandb
 
 
 class JobBookKeeping:
-    def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
-        self.run_config: BaseRunConfig = run_config
+    def __init__(self, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
+        self.job_config: BaseJobConfig = job_config
         self.wandb_config: Union[None, WandbConfig] = wandb_config
         self.job: Union[None, submitit.Job] = None
         self.result = None
@@ -32,9 +30,9 @@ class JobBookKeeping:
 class BaseJob(ABC):
     """
     This class is what you should super class to create your own custom job.
-    The methods you must overwrite are the __init__, __call__, and the checkpiont method.
+    The methods you must overwrite are the __init__, __call__, and the checkpoint method.
     
-    The __init__ method should take in a RunConfig and a WandbConfig 
+    The __init__ method should take in a JobConfig and a WandbConfig 
     object and initalize your class with those values.
     
     The __call__ method is called once and contains the entire job
@@ -45,17 +43,17 @@ class BaseJob(ABC):
     """
 
     @abstractmethod
-    def __init__(self, run_config: BaseRunConfig, wandb_config: Union[WandbConfig, None]):
-        os.makedirs(run_config.checkpoint_path, exist_ok=True)
-        self.run_config: BaseRunConfig = run_config
+    def __init__(self, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
+        os.makedirs(job_config.checkpoint_path, exist_ok=True)
+        self.job_config: BaseJobConfig = job_config
         self.wandb_config: WandbConfig = wandb_config
         self.initialized = False
 
     @abstractmethod
     def __call__(self):
         if self.wandb_config is not None:
-            init_wandb(self.wandb_config)
-            wandb.config.update(asdict(self.run_config))
+            wandb.init(asdict(self.wandb_config))
+            wandb.config.update(asdict(self.job_config))
 
         if not self.initialized:
             self._initialize()

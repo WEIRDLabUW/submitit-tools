@@ -1,8 +1,9 @@
 import submitit
 from typing import List, Type, Union
-from submitit_configs import BaseRunConfig, WandbConfig
+from configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
 from tqdm.auto import tqdm
 from submitit_tools.base_classes import BaseJob, JobBookKeeping
+from dataclasses import asdict
 
 FAILED_JOB = "FAILED_JOB"
 
@@ -13,15 +14,15 @@ class SubmititState:
     """
 
     def __init__(self,
-                 executor: submitit.AutoExecutor,
                  job_cls: Type[BaseJob],
-                 job_run_configs: List[BaseRunConfig],
+                 executor_config: SubmititExecutorConfig,
+                 job_run_configs: List[BaseJobConfig],
                  job_wandb_configs: List[Union[WandbConfig, None]],
                  with_progress_bar: bool = False,
                  max_retries: int = 30,
                  num_concurent_jobs: int = 10):
 
-        self.executor: submitit.AutoExecutor = executor
+        self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
         self.job_cls: Type[BaseJob] = job_cls
         self.max_retries: int = max_retries
         self.progress_bar = tqdm(total=len(job_run_configs), desc="Job Progress") if with_progress_bar else None
@@ -37,6 +38,17 @@ class SubmititState:
         self.finished_jobs: List[JobBookKeeping] = []
 
         self._update_submitted_queue()
+    
+    def _init_executor_(self, config: SubmititExecutorConfig):
+        """
+        Private helper to initilize executor. We want to abstract this responsibility from user.
+        """
+
+        kwargs = asdict(config)
+        executor = submitit.AutoExecutor(folder=kwargs.pop("root_folder"))
+        executor.update_parameters(**kwargs)
+
+        return executor
 
     def _update_submitted_queue(self):
         """
@@ -52,7 +64,7 @@ class SubmititState:
                 continue
             # We have to queue a job if we can
             job = self.executor.submit(
-                self.job_cls(self.pending_jobs[0].run_config, self.pending_jobs[0].wandb_config)
+                self.job_cls(self.pending_jobs[0].job_config, self.pending_jobs[0].wandb_config)
             )
             self.running_jobs[i] = self.pending_jobs.pop(0)
             self.running_jobs[i].job = job
@@ -86,14 +98,14 @@ class SubmititState:
                 # Requeue Logic
                 if current_job.retries > self.max_retries:
                     self._remove_job(i, FAILED_JOB)
-                    print(f"Job {current_job.run_config.checkpoint_path} failed after {self.max_retries} retries")
+                    print(f"Job {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries")
                     print(f"Error: {e}")
                     continue
 
                 # Resubmit the job
                 current_job.retries += 1
                 current_job.job = self.executor.submit(
-                    self.job_cls(current_job.run_config, current_job.wandb_config)
+                    self.job_cls(current_job.job_config, current_job.wandb_config)
                 )
 
         # If we ended up finishing a job, we can add a new one

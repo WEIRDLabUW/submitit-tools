@@ -3,7 +3,7 @@ from typing import Union
 
 
 @dataclass
-class BaseRunConfig:
+class BaseJobConfig:
     checkpoint_path: str = "checkpoints"
     checkpoint_name: str = "checkpoint.pt"
 
