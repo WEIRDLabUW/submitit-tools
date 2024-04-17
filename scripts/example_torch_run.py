@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torchvision
 
-from submitit_configs import BaseJobConfig, WandbConfig, run_config
+from submitit_configs import BaseJobConfig, WandbConfig
 from submitit_tools import BaseJob
 import wandb
 
