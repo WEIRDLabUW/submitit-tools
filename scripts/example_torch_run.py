@@ -80,7 +80,9 @@ class ExampleMNISTJob(BaseJob):
                 self.optimizer.step()
                 epoch_loss += loss.item()
             epoch_loss /= len(self.data_loader)
-            wandb.log({"epoch_loss": epoch_loss})
+
+            # Important: You need to add the step flag
+            wandb.log({"epoch_loss": epoch_loss}, step=epoch)
             self.completed_epochs = epoch
             # NOTE: You must do the checkpoint regularly.
             self._save_checkpoint()
