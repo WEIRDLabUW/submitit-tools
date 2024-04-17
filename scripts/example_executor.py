@@ -16,11 +16,13 @@ class SimpleAddJobConfig(BaseJobConfig):
     def __post_init__(self):
         self.checkpoint_path = f"add_{self.first_number}_to_{self.second_number}"
 
-# 2. This is the "TopLevel" Executor Config that submitit uses to execute all jobs. 
+
+# 2. This is the "TopLevel" Executor Config that submitit uses to execute all jobs.
 @dataclass
 class ExampleExecutorConfig(SubmititExecutorConfig):
     timeout_min: int = 4
     partition: str = "ckpt"
+
 
 # 3. Programatically describe how you will vary each Base Config.
 # For example, sweep the second number value from 0-9
@@ -30,10 +32,11 @@ wandb_configs = []
 for i in range(10):
     run_configs.append(
         SimpleAddJobConfig(
-            first_number = 0,
-            second_number = i,
-         ))
+            first_number=0,
+            second_number=i,
+        ))
     wandb_configs.append(None)
+
 
 # 3. This is the Job description.
 # First, configure both:
@@ -48,14 +51,15 @@ class SimpleAddJob(BaseJob):
     def __call__(self):
         time.sleep(5)
         return self.job_config.first_number + self.job_config.second_number
-    
+
     def _initialize(self):
         pass
+
 
 # 4. Create a Submitit state manager.
 state = SubmititState(
     job_cls=SimpleAddJob,
-    executor_config=ExampleExecutorConfig(), 
+    executor_config=ExampleExecutorConfig(),
     job_run_configs=run_configs,
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,

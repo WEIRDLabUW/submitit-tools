@@ -19,7 +19,7 @@ class SubmititState:
                  job_run_configs: List[BaseJobConfig],
                  job_wandb_configs: List[Union[WandbConfig, None]],
                  with_progress_bar: bool = False,
-                 max_retries: int = 30,
+                 max_retries: int = 5,
                  num_concurent_jobs: int = 10):
 
         self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
@@ -41,7 +41,7 @@ class SubmititState:
     
     def _init_executor_(self, config: SubmititExecutorConfig):
         """
-        Private helper to initilize executor. We want to abstract this responsibility from user.
+        Private helper to initialize executor. We want to abstract this responsibility from user.
         """
 
         kwargs = asdict(config)
