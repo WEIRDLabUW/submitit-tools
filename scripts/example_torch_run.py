@@ -1,6 +1,6 @@
 import time
 from submitit_configs import SubmititExecutorConfig, WandbConfig
-from submitit_tools import init_executor, SubmititState
+from submitit_tools import SubmititState
 import os
 from dataclasses import dataclass, asdict
 import torch
@@ -122,27 +122,25 @@ def generate_train_configs():
     return job_configs, wandb_configs
 
 
-def make_executor():
+
+
+def main():
     config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
                                     slurm_name="submitit-test",
                                     timeout_min=60 * 2,
                                     cpus_per_task=16,
                                     mem_gb=24)
-    return init_executor(config)
-
-
-def main():
-    executor = make_executor()
     job_configs, wandb_configs = generate_train_configs()
     state = SubmititState(
-        executor=executor,
         job_cls=ExampleMNISTJob,
+        executor_config=config,
         job_run_configs=job_configs,
         job_wandb_configs=wandb_configs,
         with_progress_bar=True,
-        max_retries=1,
+        max_retries=4,
         num_concurent_jobs=4
     )
+
     while state.done() is False:
         state.update_state()
         time.sleep(1)

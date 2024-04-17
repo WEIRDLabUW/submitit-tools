@@ -32,8 +32,11 @@ class BaseJob(ABC):
     This class is what you should super class to create your own custom job.
     The methods you must overwrite are the __init__, __call__, and the checkpoint method.
     
-    The __init__ method should take in a JobConfig and a WandbConfig 
-    object and initalize your class with those values.
+    The __init__ method should take in a JobConfig and a WandbConfig. You can add extra logic
+    here but it is not needed.
+
+    Since the job is created and then pickled to the correct compute node, you must overide the
+    _initialize method to initialize your job with all of the train information
     
     The __call__ method is called once and contains the entire job
     
@@ -42,7 +45,6 @@ class BaseJob(ABC):
     This means you MUST implement your own checkpointing.
     """
 
-    @abstractmethod
     def __init__(self, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
         os.makedirs(job_config.checkpoint_path, exist_ok=True)
         self.job_config: BaseJobConfig = job_config
