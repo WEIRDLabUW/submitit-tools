@@ -1,6 +1,6 @@
 import submitit
 from typing import List, Type, Union
-from configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
+from submitit_configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
 from tqdm.auto import tqdm
 from submitit_tools.base_classes import BaseJob, JobBookKeeping
 from dataclasses import asdict

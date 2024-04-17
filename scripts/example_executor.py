@@ -2,7 +2,7 @@ import time
 from dataclasses import dataclass
 
 from submitit_tools import SubmititState, BaseJob
-from configs import SubmititExecutorConfig, BaseJobConfig, WandbConfig
+from submitit_configs import SubmititExecutorConfig, BaseJobConfig, WandbConfig
 
 
 # 1. This is the "TopLevel" JobConfig which will be the base

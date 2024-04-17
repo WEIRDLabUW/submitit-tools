@@ -6,7 +6,7 @@ import os
 
 import wandb
 
-from configs import BaseJobConfig, WandbConfig
+from submitit_configs import BaseJobConfig, WandbConfig
 from typing import Union
 
 
