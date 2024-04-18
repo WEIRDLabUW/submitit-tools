@@ -71,15 +71,16 @@ class BaseJob(ABC):
             wandb.config.update(asdict(self.job_config))
 
         if not self.initialized:
-            self._initialize()
+            try:
+                self._initialize()
+            except Exception as e:
+                return FailedJobState(e, self.job_config, self.wandb_config)
             self.initialized = True
 
         try:
             return self._job_call()
         except Exception as e:
             # This means that the job failed and it was the user's fault, not submitit
-            if self.wandb_config is not None:
-                wandb.run.summary.update({"failed": True})
             return FailedJobState(e, self.job_config, self.wandb_config)
 
     @abstractmethod
