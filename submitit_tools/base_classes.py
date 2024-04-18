@@ -75,7 +75,7 @@ class BaseJob(ABC):
             self.initialized = True
 
         try:
-            return self._call()
+            return self._job_call()
         except Exception as e:
             # This means that the job failed and it was the user's fault, not submitit
             if self.wandb_config is not None:
@@ -83,7 +83,7 @@ class BaseJob(ABC):
             return FailedJobState(e, self.job_config, self.wandb_config)
 
     @abstractmethod
-    def _call(self):
+    def _job_call(self):
         """
         This method is called by the call method and contains the entire job
         """

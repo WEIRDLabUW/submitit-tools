@@ -64,7 +64,7 @@ class ExampleMNISTJob(BaseJob):
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
-    def _call(self):
+    def _job_call(self):
         # Run a standard training script
         for epoch in range(self.completed_epochs, self.job_config.num_epochs):
             epoch_loss = 0

@@ -45,7 +45,7 @@ for i in range(10):
 # Second, describe what happens on "__call__"
 class SimpleAddJob(BaseJob):
 
-    def _call(self):
+    def _job_call(self):
         time.sleep(5)
         return self.job_config.first_number + self.job_config.second_number
 
