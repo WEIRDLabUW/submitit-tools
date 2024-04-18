@@ -147,9 +147,11 @@ for result in state.results:
 todo
 
 ## Notes and todos:
--  Handle job crashing vs slurm errors differently
+- Handle job crashing vs slurm errors differently
 - I think that it will crash a job if the checkpoint gets corrupted while being written
-
+- Add functionality to cancel jobs if the executor dies, or the user wants to.
+    Right now if the main file crashes, the jobs will still keep runing, just without
+    being requeued if needed.
 ### Notes:
 If a job crashes, there is no way to distinguish this between being preempted or just crashed
 which can probably lead to problems. 
