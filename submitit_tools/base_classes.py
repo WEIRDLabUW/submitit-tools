@@ -100,7 +100,7 @@ class BaseJob(ABC):
     def _save_checkpoint(self):
         """
         This is a helper method that you can use to save the state of your job. Make sure to call it
-        periodically in your job incase it is killed and reaqueued.
+        periodically in your job incase it is killed and requeued. ONLY CALL THIS IN YOUR _job_call METHOD
         """
         pass
 

@@ -87,10 +87,6 @@ class ExampleMNISTJob(BaseJob):
 
 
     def _save_checkpoint(self):
-        # So that we do not overide a real checkpoint with a random init model. Not needed if you call
-        # only after the __call__ method has been called.
-        if not self.initialized:
-            return
         # Save the checkpoing.
         state_dict = {
             "completed_epochs": self.completed_epochs,
