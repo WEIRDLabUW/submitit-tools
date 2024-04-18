@@ -3,9 +3,11 @@ from dataclasses import dataclass, field
 
 @dataclass
 class SubmititExecutorBaseConfig:
-    # Don't changet these probably
+    # Don't change these probably
     slurm_account: str = "weirdlab"  # This is the account to which the job is ran from
     slurm_ntasks_per_node = 1  # The number of tasks per node
+    slurm_gpus_per_node = 1  # The number of gpus that the job will take
+    slurm_gpus_per_task = 1  # The number of gpus per task
 
 
 @dataclass

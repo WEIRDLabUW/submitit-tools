@@ -9,66 +9,93 @@ git submodule add git@github.com:WEIRDLabUW/submitit-tools.git
 cd submitit-tools
 pip install -e .
 ```
-
-
+Alternatively, you can install it like this:
+```bash
+pip install git+git@github.com:WEIRDLabUW/submitit-tools.git
+```
 
 ## Usage:
 
-To see examples that are concrete, **run** `python scripts/example_torch_run.py`. This is a good entry point and will train up
-9 mnest networks. Note you will need torch and torchvision.
+#### To see examples that are concrete, run `python scripts/example_torch_run.py`. This is a good entry point and will train up 9 mnest networks. Note you will need torch and torchvision in your conda environment.
 
-When you are using this as a submodule, you should only need to define the job class, run config and change config parameters
-when you instantiate them. 
-### More details below
+For usage, you should only need to define a job class, run config. The rest is just instantiating configs and passing
+them to submitit tools.
+
+### Things to note:
+- You need to make sure that the checkpoint path is unique for each run. If it is not,
+    it will just load the checkpointing from the previous run and then imediatly finish.
+- You can use the results from the submitit state, and add no checkpointing functionality which 
+    would work on runs on the weird-lab partitions where you know they won't be interrupted or prempted
+
+## Clear Code Examples:
 
 
-To use this for your own code, you first need to create a RunConfig. There are examples that 
-you can look at in the `submitit_configs/run_config.py` file. Here is an example:
+To use this for your own code, you first need to create a RunConfig. All a run config represents is
+the paramaters that you want to be able to pass your runs. They can be what ever you want
 
 ```python
-from submitit_configs import BaseRunConfig
-from dataclasses import dataclass
+from submitit_configs import BaseJobConfig
+from dataclasses import dataclass, field
 
 @dataclass
-class ExampleRunConfig(BaseRunConfig):
-    first_number: int = 1
-    second_number: int = 2
-    
+class CustomJobConfig(BaseJobConfig):
+    parameter1: int = 3
+    parameter2: list = field(default_factory=lambda: [1, 2, 3])
+
     def __post_init__(self):
-        self.checkpoint_path = f"add_{self.first_number}_to_{self.second_number}"
+        # To check if you have not already specified the checkpoint. You can also exclude this
+        # and make sure to override the checkpoint name.
+        if self.checkpoint_name is "checkpoint.pt":
+            self.checkpoint_name = f"checkpoint_{self.parameter1}.pt"
+        self.checkpoint_path = f"your_beautiful_checkpoint_path"
 ```
-Then you have to create a job config that handles the core of your job:
+
+The next step is to define the job that you want to run. This is what is duplicated on each
+slurm job, and ran with the config you defined above. 
+
 ```python
 from submitit_tools import BaseJob
-import os
-import torch
 
 class CustomJob(BaseJob):
-    def __init__(self, run_config, wandb_config):
-        # Initalizes some wandb stuff
+    def __init__(self, run_config: CustomJobConfig, wandb_config):
+        # Important, you must call the super init method
         super().__init__(run_config, wandb_config)
+        
+        # Note: This method runs synchronously on the node queuing all the jobs, so
+        # Try not to do much at all in this method. You do not have to define this method
+        
+        # I like to type specify the config here to help pycharm's intelisense
+        self.job_config: CustomJobConfig = run_config 
 
     def _initialize(self):
-        # Write code to initialize all the fields in your class. This is automatically called.
-        # You also must include your checkpoint logic here to load a checkpoint if it exists
+        # Write code to initialize all the fields in your class. This runs on the alocated node.
+        self.custom_field = self.job_config.parameter2 * self.job_config.parameter1
+        
+        if self.checkpoint_exists():
+            # Load the checkpoint and update your fields
+            pass
        
                 
     def __call__(self):
-        # This handles the initialization and the wandb stuff
+        # This handles the initialization and the wandb stuff. You MUST call this
         super().__call__()
 
                     
         # Your job goes here, make sure to call the self._save_checkpoint() method
         # if wandb_config was not none, you can safely call wandb.log or other wandb functions 
+        # Make sure to include the step in wandb.log() otherwise you might experience weird data stuff
+        result = "Cool Stuff"
         return result
     
     def _save_checkpoint(self):
-        # So that we do not override a real checkpoint with a random init model
+        # So that we do not override a real checkpoint if your job is preempted during initialization
+        # YOU MUST HAVE THESE TWO LINES IN YOUR CODE
         if not self.initialized:
             return
         # Save the checkpoint.
+        pass
 ```
-Then create an executor 
+Once you have defined the job and the job config, you can then run your experiments:
 ```python
 from submitit_configs import SubmititExecutorConfig
 from submitit_tools import create_executor
@@ -82,37 +109,50 @@ executor =  create_executor(config)
 
 Then you can create an executor state which handles the job submission and management:
 ```python
-from submitit_tools import  SubmititState
+from submitit_tools import SubmititState
+from submitit_configs import SubmititExecutorConfig
+import time
 
+config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
+                                    slurm_name="submitit-test",
+                                    timeout_min=60 * 2,
+                                    cpus_per_task=16,
+                                    mem_gb=24)
+# Create your list of job configs and wandb configs. 
+# They need to be the same length
+job_configs, wandb_configs = generate_train_configs()
 state = SubmititState(
-    executor # The executor configued you have created before
-    job_cls # The job class you have defined
-    job_run_configs # The list of run configs you want to run
-    job_wandb_configs # The list of wandb configs you want to run
-    with_progress_bar # If you want to use tqdm or not
-    max_retries # The number of times you can resubmit the job if it times out or fails
-    num_concurrent_jobs # The number of jobs you want to run concurrently
+    job_cls=CustomJob,
+    executor_config=config,
+    job_run_configs=job_configs,
+    job_wandb_configs=wandb_configs,
+    with_progress_bar=True,
+    max_retries=4,
+    num_concurent_jobs=-1
 )
 
+# Monitor the progress of your jobs. You can do more 
+# complicated things here
+while state.done() is False:
+    state.update_state()
+    time.sleep(1)
+
+# Process the results. The results are updated as jobs complete 
+# so you can access this before
+for result in state.results:
+    print(result)
 ```
 
-Then you can use the SubmititState to monitor the progress and process the results at the end. In my main script, I recommend this:
-```python
-    while state.done() is False:
-        state.update_state()
-        time.sleep(1)
+## Paramaters you want to change in the submitit executor config:
+todo
 
-    for result in state.results:
-        # Do something with the result. I am not sure that you need to have results, but you can use this to check if the job succeeded or not
-```
 ## Notes and todos:
--  Test if the jobs are recoverable if interrupted or stopped 
--  Handle job crashing vs slurm errors differently
-- I think that it will crash a job if the checkpoint gets corrupted
-
+- Handle job crashing vs slurm errors differently
+- I think that it will crash a job if the checkpoint gets corrupted while being written
+- Add functionality to cancel jobs if the executor dies, or the user wants to.
+    Right now if the main file crashes, the jobs will still keep runing, just without
+    being requeued if needed.
 ### Notes:
 If a job crashes, there is no way to distinguish this between being preempted or just crashed
 which can probably lead to problems. 
 
-We hypothisize that if a job is prempted, we have to handle the requing,
-but if it is just timed out at 4 hours, submitit will manage it
