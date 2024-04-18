@@ -85,3 +85,6 @@ class BaseJob(ABC):
         if self.initialized:
             self._save_checkpoint()
         return submitit.helpers.DelayedSubmission(self, *args, **kwargs)
+
+    def checkpoint_exists(self):
+        return os.path.exists(os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name))

@@ -22,6 +22,7 @@ class SubmititState:
                  output_error_messages: bool = True,
                  max_retries: int = 5,
                  num_concurent_jobs: int = 10):
+        assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
 
         self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
         self.job_cls: Type[BaseJob] = job_cls

@@ -58,7 +58,7 @@ class ExampleMNISTJob(BaseJob):
         ).to('cuda')
         self.optimizer = torch.optim.Adam(self.network.parameters())
 
-        if os.path.exists(os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name)):
+        if self.checkpoint_exists():
             checkpoint = torch.load(os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name))
             self.completed_epochs = checkpoint["completed_epochs"]
             self.network.load_state_dict(checkpoint["network"])
