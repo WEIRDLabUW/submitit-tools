@@ -64,10 +64,7 @@ class ExampleMNISTJob(BaseJob):
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
-    def __call__(self):
-        # The super call loads wandb and calls the _initalize method
-        super().__call__()
-
+    def _call(self):
         # Run a standard training script
         for epoch in range(self.completed_epochs, self.job_config.num_epochs):
             epoch_loss = 0
@@ -87,6 +84,7 @@ class ExampleMNISTJob(BaseJob):
             # NOTE: You must do the checkpoint regularly.
             self._save_checkpoint()
         return f"Success! Paramaters: {asdict(self.job_config)}"
+
 
     def _save_checkpoint(self):
         # So that we do not overide a real checkpoint with a random init model. Not needed if you call

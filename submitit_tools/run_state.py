@@ -1,11 +1,11 @@
-import submitit
-from typing import List, Type, Union
-from submitit_configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
-from tqdm.auto import tqdm
-from submitit_tools.base_classes import BaseJob, JobBookKeeping
 from dataclasses import asdict
+from typing import List, Type, Union
 
-FAILED_JOB = "FAILED_JOB"
+import submitit
+from tqdm.auto import tqdm
+
+from submitit_configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
+from submitit_tools.base_classes import BaseJob, JobBookKeeping, FailedJobState
 
 
 class SubmititState:
@@ -41,7 +41,7 @@ class SubmititState:
         self.finished_jobs: List[JobBookKeeping] = []
 
         self._update_submitted_queue()
-    
+
     def _init_executor_(self, config: SubmititExecutorConfig):
         """
         Private helper to initialize executor. We want to abstract this responsibility from user.
@@ -93,16 +93,27 @@ class SubmititState:
             try:
                 result = current_job.job.result()
 
-                # If we get here, the job worked!
+                if isinstance(result, FailedJobState):
+                    # If we get here, the job failed, and it is the user's fault
+                    print(
+                        f"Failed job due to user error with path:"
+                        f" {result.job_config.checkpoint_path}/{result.job_config.checkpoint_name}"
+                    )
+
+                    if self.output_error_messages:
+                        print(f"Error: {result.exception}")
+
+                # Either way put the job in the finished jobs as putting it back in the queue won't help
                 self._remove_job(i, result)
 
             except (submitit.core.utils.FailedJobError, submitit.core.utils.UncompletedJobError) as e:
+
                 if self.output_error_messages:
-                    print(f"Job {current_job.job_config.checkpoint_path} failed")
+                    print(f"Job {current_job.job_config.checkpoint_path} was interrupted")
                     print(f"Error: {e}")
                 # Requeue Logic
                 if current_job.retries > self.max_retries:
-                    self._remove_job(i, FAILED_JOB)
+                    self._remove_job(i, FailedJobState(None, current_job.job_config, current_job.wandb_config))
                     print(f"Job {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries")
                     print(f"Error: {e}")
                     continue

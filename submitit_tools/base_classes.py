@@ -10,6 +10,17 @@ from submitit_configs import BaseJobConfig, WandbConfig
 from typing import Union
 
 
+class FailedJobState:
+    "Class to represent a failed job"
+    def __init__(self, e: Exception, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
+        self.exception = e
+        self.job_config = job_config
+        self.wandb_config = wandb_config
+
+    def __str__(self):
+        return str(self.exception)
+
+
 class JobBookKeeping:
     def __init__(self, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
         self.job_config: BaseJobConfig = job_config
@@ -51,8 +62,10 @@ class BaseJob(ABC):
         self.wandb_config: WandbConfig = wandb_config
         self.initialized = False
 
-    @abstractmethod
     def __call__(self):
+        """
+        Handles  checkpointing and wandb logic, and then calls the user defined _call method
+        """
         if self.wandb_config is not None:
             wandb.init(**asdict(self.wandb_config))
             wandb.config.update(asdict(self.job_config))
@@ -61,13 +74,28 @@ class BaseJob(ABC):
             self._initialize()
             self.initialized = True
 
+        try:
+            return self._call()
+        except Exception as e:
+            # This means that the job failed and it was the user's fault, not submitit
+            if self.wandb_config is not None:
+                wandb.run.summary.update({"failed": True})
+            return FailedJobState(e, self.job_config, self.wandb_config)
+
+    @abstractmethod
+    def _call(self):
+        """
+        This method is called by the call method and contains the entire job
+        """
+        raise NotImplementedError("This method must be implemented")
+
     @abstractmethod
     def _initialize(self):
         """
         This method is called by the call method and initalizes the object. Make sure to implement this
         with all the field definitions that you need.
         """
-        assert False, "This method must be implemented"
+        raise NotImplementedError("This method must be implemented")
 
     def _save_checkpoint(self):
         """
