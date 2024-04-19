@@ -76,11 +76,7 @@ class CustomJob(BaseJob):
             pass
        
                 
-    def __call__(self):
-        # This handles the initialization and the wandb stuff. You MUST call this
-        super().__call__()
-
-                    
+    def _job_call(self):
         # Your job goes here, make sure to call the self._save_checkpoint() method
         # if wandb_config was not none, you can safely call wandb.log or other wandb functions 
         # Make sure to include the step in wandb.log() otherwise you might experience weird data stuff
@@ -89,9 +85,6 @@ class CustomJob(BaseJob):
     
     def _save_checkpoint(self):
         # So that we do not override a real checkpoint if your job is preempted during initialization
-        # YOU MUST HAVE THESE TWO LINES IN YOUR CODE
-        if not self.initialized:
-            return
         # Save the checkpoint.
         pass
 ```
@@ -147,12 +140,10 @@ for result in state.results:
 todo
 
 ## Notes and todos:
-- Handle job crashing vs slurm errors differently
+~~- Handle job crashing vs slurm errors differently~~
 - I think that it will crash a job if the checkpoint gets corrupted while being written
 - Add functionality to cancel jobs if the executor dies, or the user wants to.
     Right now if the main file crashes, the jobs will still keep runing, just without
     being requeued if needed.
-### Notes:
-If a job crashes, there is no way to distinguish this between being preempted or just crashed
-which can probably lead to problems. 
+
 
