@@ -87,17 +87,6 @@ class CustomJob(BaseJob):
         # Save the checkpoint. Only call this method during your _job_call method
         pass
 ```
-Once you have defined the job and the job config, you can then run your experiments:
-```python
-from submitit_configs import SubmititExecutorConfig
-from submitit_tools import create_executor
-config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
-                                    slurm_name="submitit-test",
-                                    timeout_min=60*2,
-                                    cpus_per_task=16,
-                                    mem_gb=24)
-executor =  create_executor(config)
-```
 
 Then you can create an executor state which handles the job submission and management:
 ```python
