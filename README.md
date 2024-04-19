@@ -84,8 +84,7 @@ class CustomJob(BaseJob):
         return result
     
     def _save_checkpoint(self):
-        # So that we do not override a real checkpoint if your job is preempted during initialization
-        # Save the checkpoint.
+        # Save the checkpoint. Only call this method during your _job_call method
         pass
 ```
 Once you have defined the job and the job config, you can then run your experiments:
