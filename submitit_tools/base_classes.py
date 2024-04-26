@@ -75,6 +75,7 @@ class BaseJob(ABC):
             try:
                 self._initialize()
             except Exception as e:
+                print(e)
                 return FailedJobState(e, self.job_config, self.wandb_config)
             self.initialized = True
 
