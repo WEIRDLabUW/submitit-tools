@@ -64,7 +64,9 @@ class TorchJob(BaseJob):
         self.test_loader = self._prepare_dataloader(test_dataset) if test_dataset is not None else None
 
         self.epochs_run = 0
-        self.model = self.model.cuda(self.local_rank)
+        print('pre error')
+        self.model = self.model.to(self.local_rank)
+        print('post error')
 
         if self.job_config.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
