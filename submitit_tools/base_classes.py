@@ -12,6 +12,7 @@ from typing import Union
 
 class FailedJobState:
     "Class to represent a failed job"
+
     def __init__(self, e: Exception, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
         self.exception = e
         self.job_config = job_config
@@ -117,3 +118,8 @@ class BaseJob(ABC):
 
     def checkpoint_exists(self):
         return os.path.exists(os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name))
+
+    @property
+    def save_path(self):
+        """Helper method that returns the save path of the job. This is useful for saving / loading the job"""
+        return os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name)
