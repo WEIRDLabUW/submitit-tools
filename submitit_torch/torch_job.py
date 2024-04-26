@@ -45,6 +45,7 @@ class TorchJob(BaseJob):
         print(f"world size: {dist_env.world_size}")
         print(f"local rank: {dist_env.local_rank}")
         print(f"local world size: {dist_env.local_world_size}")
+        print(f"nvidia-smi output = {run_nvidia_smi()}")
         torch.distributed.init_process_group(backend="nccl")
         assert dist_env.rank == torch.distributed.get_rank()
         assert dist_env.world_size == torch.distributed.get_world_size()
@@ -56,7 +57,6 @@ class TorchJob(BaseJob):
         self.lr_scheduler = None
 
         model, optimizer, train_dataset, test_dataset = self.job_config.create_artifacts(self.job_config)
-
         self.model = model
         self.optimizer = optimizer
         self.train_loader = self._prepare_dataloader(train_dataset)
@@ -76,7 +76,7 @@ class TorchJob(BaseJob):
         print("initializing wandb")
         # initalize wandb:
         if self.global_rank == 0:
-            wandb.init(asdict(self._wandb_config).update({"gpus": run_nvidia_smi()}))
+            wandb.init(asdict(self._wandb_config))
             wandb.config.update(asdict(self.job_config))
         print("wandb initalized")
 
