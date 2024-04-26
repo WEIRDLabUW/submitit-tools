@@ -65,7 +65,9 @@ class TorchJob(BaseJob):
 
         self.epochs_run = 0
         print('pre error')
-        self.model = self.model.to(self.local_rank)
+        torch.cuda.set_device(dist_env.local_rank)
+
+        self.model = self.model.cuda()
         print('post error')
 
         if self.job_config.use_amp:
@@ -73,7 +75,7 @@ class TorchJob(BaseJob):
 
         if self.checkpoint_exists():
             self.load_checkpoint()
-
+        print('next_error spot')
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
         print("initializing wandb")
