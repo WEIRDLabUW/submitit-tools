@@ -42,12 +42,13 @@ def main():
     wandb_config = WandbConfig()
     executor_config = SubmititExecutorConfig(
         slurm_additional_parameters={},
-        slurm_gpus_per_node=3,
-        slurm_ntasks_per_node=3,
+        slurm_gpus_per_node=4,
+        slurm_ntasks_per_node=4,
         slurm_name="submitit-test",
         timeout_min=60 * 2,
-        cpus_per_task=16,
-        mem_gb=24,
+        cpus_per_task=8,
+        mem_gb=64,
+        slurm_partition="gpu-l4"
         )
     executor = SubmititState(
         TorchJob,

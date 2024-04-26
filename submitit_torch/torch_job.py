@@ -11,7 +11,7 @@ import os
 
 from .torch_config import TorchMultiprocessingJobConfig
 from submitit_configs import WandbConfig
-from submitit_tools import BaseJob
+from submitit_tools import BaseJob, run_nvidia_smi
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.distributed import DistributedSampler
@@ -77,7 +77,7 @@ class TorchJob(BaseJob):
 
         # initalize wandb:
         if self.global_rank == 0:
-            wandb.init(asdict(self._wandb_config))
+            wandb.init(asdict(self._wandb_config).update({"gpus": run_nvidia_smi()}))
             wandb.config.update(asdict(self.job_config))
 
     def _job_call(self):
