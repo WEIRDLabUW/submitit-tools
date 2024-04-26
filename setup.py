@@ -3,7 +3,9 @@ from setuptools import setup, find_packages
 requirements = [
     "submitit",
     "tqdm",
-    "wandb"
+    "wandb",
+    "torch",
+    "fsspec",
 ]
 
 setup(
