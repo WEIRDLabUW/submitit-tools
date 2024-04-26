@@ -75,12 +75,14 @@ class BaseJob(ABC):
             try:
                 self._initialize()
             except Exception as e:
+                print(e)
                 return FailedJobState(e, self.job_config, self.wandb_config)
             self.initialized = True
 
         try:
             return self._job_call()
         except Exception as e:
+            print(e)
             # This means that the job failed and it was the user's fault, not submitit
             return FailedJobState(e, self.job_config, self.wandb_config)
 

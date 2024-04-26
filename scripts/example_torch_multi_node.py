@@ -54,7 +54,10 @@ def main():
         cpus_per_task=8,
         mem_gb=64,
         slurm_partition="gpu-l40"
-        )
+    )
+    executor_config.__delattr__("slurm_gpus_per_task")
+
+    print(executor_config)
 
     executor = SubmititState(
         TorchJob,
