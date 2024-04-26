@@ -65,8 +65,6 @@ class TorchJob(BaseJob):
         self.epochs_run = 0
         self.model = self.model.to(self.local_rank)
 
-        self.save_every = self.job_config.save_every
-
         if self.job_config.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
 
@@ -75,16 +73,19 @@ class TorchJob(BaseJob):
 
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
+        print("initializing wandb")
         # initalize wandb:
         if self.global_rank == 0:
             wandb.init(asdict(self._wandb_config).update({"gpus": run_nvidia_smi()}))
             wandb.config.update(asdict(self.job_config))
+        print("wandb initalized")
 
     def _job_call(self):
         """
         This method is called by the call method and contains the entire job
         """
         for epoch in range(self.epochs_run, self.job_config.max_epochs):
+            print(f"Running epoch {epoch}")
             epoch += 1
             avg_loss = self._run_epoch(epoch, self.train_loader, train=True)
 
@@ -94,6 +95,7 @@ class TorchJob(BaseJob):
                 test_loss = torch.tensor([test_avg_loss]).to(f'cuda:{self.local_rank}')
                 dist.reduce(test_loss, 0, dist.ReduceOp.SUM)
             if self.global_rank == 0:
+                print(f"In epoch {epoch} with rank {self.global_rank} the loss is {avg_loss}")
                 log_dict = {"loss": avg_loss, "learning_rate": self.optimizer.param_groups[0]['lr']}
                 if self.test_loader:
                     test_loss = test_loss / self.world_size
@@ -102,12 +104,13 @@ class TorchJob(BaseJob):
                 else:
                     wandb.log(log_dict, step=epoch)
 
-                if epoch % self.save_every == 0:
+                if epoch % self.job_config.save_every == 0:
                     self._save_checkpoint()
 
                 if self.lr_scheduler:
                     # assumes that this is the reduce on plateau one
                     self.lr_scheduler.step(metrics=avg_loss)
+                print(f"Epoch {epoch} completed with rank {self.global_rank}")
         return f"Final loss is {avg_loss}"
         # if self.global_rank == 0:
         #     self._save_snapshot(epoch)
