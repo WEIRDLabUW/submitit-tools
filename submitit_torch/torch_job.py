@@ -180,7 +180,6 @@ class TorchJob(BaseJob):
             dataset,
             batch_size=self.job_config.batch_size,
             pin_memory=True,
-            shuffle=self.job_config.shuffle,
             num_workers=self.job_config.data_loader_workers,
             sampler=DistributedSampler(dataset)
         )
