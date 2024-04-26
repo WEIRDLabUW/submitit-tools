@@ -48,7 +48,7 @@ def main():
         timeout_min=60 * 2,
         cpus_per_task=8,
         mem_gb=64,
-        slurm_partition="gpu-l4"
+        slurm_partition="gpu-l40"
         )
     executor = SubmititState(
         TorchJob,
