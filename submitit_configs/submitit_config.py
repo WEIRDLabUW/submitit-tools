@@ -10,10 +10,10 @@ from dataclasses import dataclass, field
 @dataclass
 class SubmititExecutorConfig:
     slurm_account: str = "weirdlab"  # This is the account to which the job is ran from
-    slurm_ntasks_per_node = 1  # The number of tasks per node
-    slurm_gpus_per_node = 1  # The number of gpus that the job will take
-    slurm_gpus_per_task = 1  # The number of gpus per task
-    slurm_nodes = 1  # The number of nodes utilized
+    slurm_ntasks_per_node: int = 1  # The number of tasks per node
+    slurm_gpus_per_node: int = 1  # The number of gpus that the job will take
+    slurm_gpus_per_task: int = 1  # The number of gpus per task
+    slurm_nodes: int = 1  # The number of nodes utilized
     root_folder: str = "default_root_folder"  # This is the root folder to where submitit output is saved
     slurm_name: str = "experiment"  # This is the name of the job that shows up on squeue
     timeout_min: int = (4 * 60) - 1  # This is the timeout in minutes
