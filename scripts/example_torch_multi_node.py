@@ -43,7 +43,7 @@ def main():
     executor_config = SubmititExecutorConfig(
         slurm_additional_parameters={"gpus": "a40"},
         slurm_gpus_per_node=3,
-        slurm_tasks_per_node=3,
+        slurm_ntasks_per_node=3,
         slurm_name="submitit-test",
         timeout_min=60 * 2,
         cpus_per_task=16,
