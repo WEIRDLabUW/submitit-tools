@@ -84,7 +84,7 @@ class TorchJob(BaseJob):
         """
         This method is called by the call method and contains the entire job
         """
-        for epoch in range(self.epochs_run, self.config.max_epochs):
+        for epoch in range(self.epochs_run, self.job_config.max_epochs):
             epoch += 1
             avg_loss = self._run_epoch(epoch, self.train_loader, train=True)
 

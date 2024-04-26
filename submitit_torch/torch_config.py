@@ -20,4 +20,4 @@ class TorchMultiprocessingJobConfig(BaseJobConfig):
     save_every: int = 1
     use_amp: bool = False
     grad_norm_clip: float = 1.0
-
+    max_epochs: int = 4
