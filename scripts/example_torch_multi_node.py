@@ -57,6 +57,8 @@ def main():
     )
     executor_config.__delattr__("slurm_gpus_per_task")
 
+    print(executor_config)
+
     executor = SubmititState(
         TorchJob,
         executor_config=executor_config,
