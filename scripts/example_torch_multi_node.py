@@ -41,7 +41,14 @@ def main():
     job_config = TorchMultiprocessingJobConfig(get_loss=get_loss, create_artifacts=create_artifacts, batch_size=64)
     wandb_config = WandbConfig()
     executor_config = SubmititExecutorConfig(
-        slurm_additional_parameters={"gpus": "a40:1"},
+        slurm_additional_parameters={},
+        slurm_gpus_per_node=4,
+        slurm_ntasks_per_node=4,
+        slurm_name="submitit-test",
+        timeout_min=60 * 2,
+        cpus_per_task=8,
+        mem_gb=64,
+        slurm_partition="gpu-l40"
         )
     executor = SubmititState(
         TorchJob,
