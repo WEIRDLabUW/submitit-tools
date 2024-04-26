@@ -61,7 +61,7 @@ def main():
     while executor.done() is False:
         executor.update_state()
 
-    print(executor.results())
+    print(executor.results)
 
 
 if __name__ == '__main__':
