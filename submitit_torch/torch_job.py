@@ -37,7 +37,6 @@ class TorchJob(BaseJob):
         self._wandb_config: WandbConfig = wandb_config
 
     def _initialize(self):
-
         dist_env = submitit.helpers.TorchDistributedEnvironment().export()
 
         print(f"master: {dist_env.master_addr}:{dist_env.master_port}")
@@ -47,6 +46,7 @@ class TorchJob(BaseJob):
         print(f"local world size: {dist_env.local_world_size}")
         print(f"nvidia-smi output = {run_nvidia_smi()}")
         print(f"Cuda is {torch.cuda.is_available()}")
+
         torch.distributed.init_process_group(backend="nccl")
         assert dist_env.rank == torch.distributed.get_rank()
         assert dist_env.world_size == torch.distributed.get_world_size()
@@ -64,16 +64,19 @@ class TorchJob(BaseJob):
         self.test_loader = self._prepare_dataloader(test_dataset) if test_dataset is not None else None
 
         self.epochs_run = 0
-        print('pre error')
-        self.model = self.model.to(self.local_rank)
-        print('post error')
+        # print('pre error')
+        # print(f"Cuda visible devices is {torch.cuda._parse_visible_devices()}")
+        # print(f"My local rank is {self.local_rank}")
+        self.model = self.model.cuda()
+        # print(f"Model device is {next(model.parameters()).device}")
+
 
         if self.job_config.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
 
         if self.checkpoint_exists():
             self.load_checkpoint()
-
+        print('next_error spot')
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
         print("initializing wandb")
@@ -82,6 +85,7 @@ class TorchJob(BaseJob):
             wandb.init(asdict(self._wandb_config))
             wandb.config.update(asdict(self.job_config))
         print("wandb initalized")
+        print(f"nvidia-smi output = {run_nvidia_smi()}")
 
     def _job_call(self):
         """
@@ -95,7 +99,7 @@ class TorchJob(BaseJob):
             # eval run
             if self.test_loader:
                 test_avg_loss = self._run_epoch(epoch, self.test_loader, train=False)
-                test_loss = torch.tensor([test_avg_loss]).to(f'cuda:{self.local_rank}')
+                test_loss = torch.tensor([test_avg_loss]).cuda()
                 dist.reduce(test_loss, 0, dist.ReduceOp.SUM)
             if self.global_rank == 0:
                 print(f"In epoch {epoch} with rank {self.global_rank} the loss is {avg_loss}")
@@ -144,8 +148,8 @@ class TorchJob(BaseJob):
         dataloader.sampler.set_epoch(epoch)
         losses = []
         for source, targets in dataloader:
-            source = source.to(self.local_rank)
-            targets = targets.to(self.local_rank)
+            source = source.cuda()
+            targets = targets.cuda()
             batch_loss = self._run_batch(source, targets, train)
             losses.append(batch_loss)
 
