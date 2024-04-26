@@ -99,7 +99,7 @@ class SubmititState:
                 if current_job.job.num_tasks == 1:
                     result = [current_job.job.result()]
                 else:
-                    result= current_job.job.results()
+                    result = current_job.job.results()
                 for r in result:
                     if isinstance(r, FailedJobState):
                         # If we get here, the job failed, and it is the user's fault

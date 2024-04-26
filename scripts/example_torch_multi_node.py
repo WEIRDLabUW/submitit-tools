@@ -50,12 +50,14 @@ def main():
         mem_gb=64,
         slurm_partition="gpu-l40"
         )
+
     executor = SubmititState(
         TorchJob,
         executor_config=executor_config,
         job_run_configs=[job_config],
         job_wandb_configs=[wandb_config],
         with_progress_bar=True,
+        output_error_messages=True
     )
 
     while executor.done() is False:

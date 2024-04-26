@@ -8,7 +8,6 @@ import torch
 import wandb
 import os
 
-
 from .torch_config import TorchMultiprocessingJobConfig
 from submitit_configs import WandbConfig
 from submitit_tools import BaseJob, run_nvidia_smi
@@ -38,6 +37,7 @@ class TorchJob(BaseJob):
         self._wandb_config: WandbConfig = wandb_config
 
     def _initialize(self):
+
         dist_env = submitit.helpers.TorchDistributedEnvironment().export()
 
         print(f"master: {dist_env.master_addr}:{dist_env.master_port}")
@@ -94,17 +94,16 @@ class TorchJob(BaseJob):
                 test_loss = torch.tensor([test_avg_loss]).to(f'cuda:{self.local_rank}')
                 dist.reduce(test_loss, 0, dist.ReduceOp.SUM)
             if self.global_rank == 0:
-                if self.use_wandb:
-                    log_dict = {"loss": avg_loss, "learning_rate": self.optimizer.param_groups[0]['lr']}
-                    if self.test_loader:
-                        test_loss = test_loss / self.world_size
-                        log_dict['test_loss'] = test_loss.item()
-                        wandb.log(log_dict, step=epoch)
-                    else:
-                        wandb.log(log_dict, step=epoch)
+                log_dict = {"loss": avg_loss, "learning_rate": self.optimizer.param_groups[0]['lr']}
+                if self.test_loader:
+                    test_loss = test_loss / self.world_size
+                    log_dict['test_loss'] = test_loss.item()
+                    wandb.log(log_dict, step=epoch)
+                else:
+                    wandb.log(log_dict, step=epoch)
 
                 if epoch % self.save_every == 0:
-                    self._save_snapshot(epoch)
+                    self._save_checkpoint()
 
                 if self.lr_scheduler:
                     # assumes that this is the reduce on plateau one
@@ -161,12 +160,12 @@ class TorchJob(BaseJob):
 
         # save snapshot
         snapshot = asdict(snapshot)
-        torch.save(snapshot, os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name))
+        torch.save(snapshot, self.save_path)
 
         print(f"Snapshot saved at epoch {self.epochs_run}")
 
     def load_checkpoint(self):
-        snapshot = fsspec.open(self.config.snapshot_path)
+        snapshot = fsspec.open(self.save_path)
         with snapshot as f:
             snapshot_data = torch.load(f, map_location="cpu")
 

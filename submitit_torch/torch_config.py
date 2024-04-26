@@ -16,7 +16,7 @@ class TorchMultiprocessingJobConfig(BaseJobConfig):
 
     batch_size: int = 32
     shuffle: bool = True
-    num_workers: int = 4
+    data_loader_workers: int = 4
     save_every: int = 1
     use_amp: bool = False
     grad_norm_clip: float = 1.0
