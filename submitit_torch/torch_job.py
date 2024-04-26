@@ -73,10 +73,12 @@ class TorchJob(BaseJob):
 
         self.model = DDP(self.model, device_ids=[self.local_rank])
 
+        print("initializing wandb")
         # initalize wandb:
         if self.global_rank == 0:
             wandb.init(asdict(self._wandb_config).update({"gpus": run_nvidia_smi()}))
             wandb.config.update(asdict(self.job_config))
+        print("wandb initalized")
 
     def _job_call(self):
         """
