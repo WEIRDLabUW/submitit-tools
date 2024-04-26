@@ -8,7 +8,7 @@ class SubmititExecutorBaseConfig:
     slurm_ntasks_per_node = 1  # The number of tasks per node
     slurm_gpus_per_node = 1  # The number of gpus that the job will take
     slurm_gpus_per_task = 1  # The number of gpus per task
-    slurm_num_nodes = 1  # The number of nodes utilized
+    slurm_nodes = 1  # The number of nodes utilized
 
 
 @dataclass
