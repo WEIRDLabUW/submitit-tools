@@ -46,6 +46,7 @@ class TorchJob(BaseJob):
         print(f"local rank: {dist_env.local_rank}")
         print(f"local world size: {dist_env.local_world_size}")
         print(f"nvidia-smi output = {run_nvidia_smi()}")
+        print(f"Cuda is {torch.cuda.is_available()}")
         torch.distributed.init_process_group(backend="nccl")
         assert dist_env.rank == torch.distributed.get_rank()
         assert dist_env.world_size == torch.distributed.get_world_size()
@@ -63,7 +64,7 @@ class TorchJob(BaseJob):
         self.test_loader = self._prepare_dataloader(test_dataset) if test_dataset is not None else None
 
         self.epochs_run = 0
-        self.model = self.model.to(self.local_rank)
+        self.model = self.model.cuda(self.local_rank)
 
         if self.job_config.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
