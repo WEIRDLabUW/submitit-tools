@@ -21,3 +21,4 @@ class WandbConfig:
     notes: str = "default_notes"
     resume: str = "allow"
     id: str = None   # You MUST overide this value with a unique id that can be used to resume the run
+    mode="online"  # Only change this if you want the runs to be "offline"
