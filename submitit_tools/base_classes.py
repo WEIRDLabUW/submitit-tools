@@ -81,6 +81,7 @@ class BaseJob(ABC):
         try:
             return self._job_call()
         except Exception as e:
+            print(e)
             # This means that the job failed and it was the user's fault, not submitit
             return FailedJobState(e, self.job_config, self.wandb_config)
 
