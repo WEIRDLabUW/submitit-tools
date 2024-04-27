@@ -1,3 +1,5 @@
+import time
+
 import torchvision
 import wandb
 
@@ -73,8 +75,10 @@ def main():
 
     while executor.done() is False:
         executor.update_state()
+        time.sleep(1)
 
     print(executor.results)
+    time.sleep(5)
 
 
 if __name__ == '__main__':
