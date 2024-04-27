@@ -11,11 +11,10 @@ import torch.nn as nn
 
 
 def get_loss(net, x, y):
-    print(x)
     pred = net(x)
     print(pred.shape)
     print(y.shape)
-    return torch.nn.functional.cross_entropy(net(x), y)
+    return torch.nn.functional.cross_entropy(pred, y)
 
 
 def create_artifacts(config: TorchMultiprocessingJobConfig):
