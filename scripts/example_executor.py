@@ -21,7 +21,7 @@ class SimpleAddJobConfig(BaseJobConfig):
 @dataclass
 class ExampleExecutorConfig(SubmititExecutorConfig):
     timeout_min: int = 4
-    partition: str = "ckpt"
+    slurm_partition: str = "ckpt"
 
 
 # 3. Programatically describe how you will vary each Base Config.
