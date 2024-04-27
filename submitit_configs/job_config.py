@@ -8,7 +8,7 @@ class BaseJobConfig:
     checkpoint_name: str = "checkpoint.pt"
 
     def __post_init__(self):
-        # Do something here that is smart for the paramaters:
+        # Do something here that is smart for the parameters:
         pass
     
  
