@@ -37,6 +37,7 @@ class TorchJob(BaseJob):
         self._wandb_config: WandbConfig = wandb_config
 
     def _initialize(self):
+        os.environ["CUDA_LAUNCH_BLOCKING"] = 1
 
         dist_env = submitit.helpers.TorchDistributedEnvironment().export()
 
@@ -67,7 +68,7 @@ class TorchJob(BaseJob):
         print('pre error')
         print(f"Cuda visible devices is {torch.cuda._parse_visible_devices()}")
         print(f"My local rank is {self.local_rank}")
-        self.model = self.model.cuda()
+        self.model = self.model.to(self.local_rank)
         print(f"Model device is {next(model.parameters()).device}")
 
         print('post error')
