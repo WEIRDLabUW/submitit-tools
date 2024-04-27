@@ -3,7 +3,7 @@ from dataclasses import asdict
 
 import submitit
 import os
-
+import traceback
 import wandb
 
 from submitit_configs import BaseJobConfig, WandbConfig
@@ -12,6 +12,7 @@ from typing import Union
 
 class FailedJobState:
     "Class to represent a failed job"
+
     def __init__(self, e: Exception, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
         self.exception = e
         self.job_config = job_config
@@ -42,15 +43,15 @@ class BaseJob(ABC):
     """
     This class is what you should super class to create your own custom job.
     The methods you must overwrite are the __init__, __call__, and the checkpoint method.
-    
+
     The __init__ method should take in a JobConfig and a WandbConfig. You can add extra logic
     here but it is not needed.
 
     Since the job is created and then pickled to the correct compute node, you must overide the
     _initialize method to initialize your job with all of the train information
-    
+
     The __call__ method is called once and contains the entire job
-    
+
     the checkpoint method is called to save the state of the job. If the
     job is on the checkpoint partition, then this is not called, and only if timed out
     This means you MUST implement your own checkpointing.
@@ -74,12 +75,19 @@ class BaseJob(ABC):
             try:
                 self._initialize()
             except Exception as e:
+                # Print the exception for logging purposes
+                print(e)
+                traceback.print_exc()
+                # This means that the job failed and it was the user's fault, not submitit
                 return FailedJobState(e, self.job_config, self.wandb_config)
             self.initialized = True
 
         try:
             return self._job_call()
         except Exception as e:
+            # Print the exception for logging purposes
+            print(e)
+            traceback.print_exc()
             # This means that the job failed and it was the user's fault, not submitit
             return FailedJobState(e, self.job_config, self.wandb_config)
 
@@ -117,3 +125,8 @@ class BaseJob(ABC):
 
     def checkpoint_exists(self):
         return os.path.exists(os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name))
+
+    @property
+    def save_path(self):
+        """Helper method that returns the save path of the job. This is useful for saving / loading the job"""
+        return os.path.join(self.job_config.checkpoint_path, self.job_config.checkpoint_name)

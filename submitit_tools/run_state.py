@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from typing import List, Type, Union
+import atexit
 
 import submitit
 from tqdm.auto import tqdm
@@ -21,7 +22,23 @@ class SubmititState:
                  with_progress_bar: bool = False,
                  output_error_messages: bool = True,
                  max_retries: int = 5,
-                 num_concurent_jobs: int = 10):
+                 num_concurrent_jobs: int = 10,
+                 cancel_on_exit: bool = True):
+        """
+        Initializes the SubmititState instance.
+
+        :param job_cls: The class of the job to be submitted. This should be a subclass of BaseJob.
+        :param executor_config: Configuration for the executor. This should be an instance of ``SubmititExecutorConfig``
+        :param job_run_configs: A list of configurations for each job to be run.
+            Each configuration should be a derivation of  ``BaseJobConfig``.
+        :param job_wandb_configs: A list of configurations for Weights & Biases for each job.
+            Each configuration should be either an instance of ``WandbConfig`` or None.
+        :param with_progress_bar: A boolean indicating whether to display a progress bar for the jobs
+        :param output_error_messages: A boolean indicating whether to output more verbose error messages
+        :param max_retries: The maximum number of times to retry a job if it is interrupted
+        :param num_concurrent_jobs: The number of jobs to run concurrently
+        :param cancel_on_exit: A boolean indicating whether to cancel all jobs when the main process exits
+        """
         assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
 
         self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
@@ -35,12 +52,15 @@ class SubmititState:
             zip(job_run_configs, job_wandb_configs)
         ]
 
-        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurent_jobs if num_concurent_jobs > 0
+        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurrent_jobs if num_concurrent_jobs > 0
                                                                          else len(self.pending_jobs))
 
         self.finished_jobs: List[JobBookKeeping] = []
 
         self._update_submitted_queue()
+
+        if cancel_on_exit:
+            atexit.register(self._cancel_all)
 
     def _init_executor_(self, config: SubmititExecutorConfig):
         """
@@ -91,17 +111,20 @@ class SubmititState:
 
             # The job is finished! It might have failed:
             try:
-                result = current_job.job.result()
+                if current_job.job.num_tasks == 1:
+                    result = [current_job.job.result()]
+                else:
+                    result = current_job.job.results()
+                for r in result:
+                    if isinstance(r, FailedJobState):
+                        # If we get here, the job failed, and it is the user's fault
+                        print(
+                            f"Failed job due to user error with path:"
+                            f" {r.job_config.checkpoint_path}/{r.job_config.checkpoint_name}"
+                        )
 
-                if isinstance(result, FailedJobState):
-                    # If we get here, the job failed, and it is the user's fault
-                    print(
-                        f"Failed job due to user error with path:"
-                        f" {result.job_config.checkpoint_path}/{result.job_config.checkpoint_name}"
-                    )
-
-                    if self.output_error_messages:
-                        print(f"Error: {result.exception}")
+                        if self.output_error_messages:
+                            print(f"Error: {r.exception}")
 
                 # Either way put the job in the finished jobs as putting it back in the queue won't help
                 self._remove_job(i, result)
@@ -141,6 +164,12 @@ class SubmititState:
         if self.progress_bar is not None:
             self.progress_bar.update(1)
 
+    def _cancel_all(self):
+        """Private helper method to cancel all running jobs"""
+        for job in self.running_jobs:
+            if job is not None:
+                job.job.cancel(check=False)
+
     @property
     def tasks_left(self):
         """This method returns the number of tasks left
@@ -161,7 +190,9 @@ class SubmititState:
     @property
     def results(self):
         """
-        Returns the results in the order in which they were completed
+        Returns the results in the order in which they were completed. Note, if you
+        have a multitask job there will be nested lists so it is list[list[job results]]. If
+        just single task jobs, it will be a list[results] where results are what your job returns
         """
         return [job.result for job in self.finished_jobs]
 
