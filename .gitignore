@@ -4,3 +4,4 @@ outputs/
 .idea/
 *.egg-info/
 __pycache__/
+data/
