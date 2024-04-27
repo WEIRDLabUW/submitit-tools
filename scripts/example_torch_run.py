@@ -132,7 +132,7 @@ def main():
         job_wandb_configs=wandb_configs,
         with_progress_bar=True,
         max_retries=4,
-        num_concurent_jobs=4
+        num_concurrent_jobs=4
     )
 
     while state.done() is False:
