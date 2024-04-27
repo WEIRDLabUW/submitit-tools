@@ -52,14 +52,14 @@ def main():
         id=wandb.util.generate_id()
     )
     executor_config = SubmititExecutorConfig(
-        slurm_additional_parameters={},
+        slurm_additional_parameters={"constraint": "ampere"},
         slurm_gpus_per_node=4,
         slurm_ntasks_per_node=4,
         slurm_name="submitit-test",
         timeout_min=60 * 2,
         cpus_per_task=8,
         mem_gb=64,
-        slurm_partition="gpu-l40"
+        slurm_partition="ckpt"
     )
 
     print(executor_config)
