@@ -11,6 +11,7 @@ import torch.nn as nn
 
 
 def get_loss(net, x, y):
+    print(x)
     pred = net(x)
     print(pred.shape)
     print(y.shape)
