@@ -37,6 +37,7 @@ class ExampleMNISTJob(BaseJob):
             download=True,
             transform=torchvision.transforms.ToTensor()
         )
+
         self.data_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=self.job_config.batch_size,
@@ -85,7 +86,6 @@ class ExampleMNISTJob(BaseJob):
             self._save_checkpoint()
         return f"Success! Paramaters: {asdict(self.job_config)}"
 
-
     def _save_checkpoint(self):
         # Save the checkpoing.
         state_dict = {
@@ -118,8 +118,6 @@ def generate_train_configs():
     return job_configs, wandb_configs
 
 
-
-
 def main():
     config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
                                     slurm_name="submitit-test",
@@ -134,7 +132,7 @@ def main():
         job_wandb_configs=wandb_configs,
         with_progress_bar=True,
         max_retries=4,
-        num_concurent_jobs=4
+        num_concurrent_jobs=4
     )
 
     while state.done() is False:
@@ -143,6 +141,8 @@ def main():
 
     for result in state.results:
         print(result)
+
+    time.sleep(5)
 
 
 if __name__ == "__main__":

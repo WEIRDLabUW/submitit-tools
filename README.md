@@ -1,6 +1,6 @@
 # submitit-tools
 This repository aims to give a simple way to submit jobs to Hyak integrating in weights and biases. You can install it as a library
-but right now it is intended to be a submodule in your repository
+or as a submodule in your repository. Any changes or bug fixes are welcome!
 
 ## Installation
 Run the following commands to install it as a submodule:
@@ -17,6 +17,7 @@ pip install git+git@github.com:WEIRDLabUW/submitit-tools.git
 ## Usage:
 
 #### To see examples that are concrete, run `python scripts/example_torch_run.py`. This is a good entry point and will train up 9 mnest networks. Note you will need torch and torchvision in your conda environment.
+There is also a good example with comments in `scripts/example_executor.py`.
 
 For usage, you should only need to define a job class, run config. The rest is just instantiating configs and passing
 them to submitit tools.
@@ -89,16 +90,17 @@ class CustomJob(BaseJob):
 ```
 
 Then you can create an executor state which handles the job submission and management:
+
 ```python
 from submitit_tools import SubmititState
 from submitit_configs import SubmititExecutorConfig
 import time
 
 config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
-                                    slurm_name="submitit-test",
-                                    timeout_min=60 * 2,
-                                    cpus_per_task=16,
-                                    mem_gb=24)
+                                slurm_name="submitit-test",
+                                timeout_min=60 * 2,
+                                cpus_per_task=16,
+                                mem_gb=24)
 # Create your list of job configs and wandb configs. 
 # They need to be the same length
 job_configs, wandb_configs = generate_train_configs()
@@ -109,7 +111,8 @@ state = SubmititState(
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
     max_retries=4,
-    num_concurent_jobs=-1
+    num_concurrent_jobs=-1,
+    cancel_on_exit=True
 )
 
 # Monitor the progress of your jobs. You can do more 
@@ -128,10 +131,10 @@ for result in state.results:
 todo
 
 ## Notes and todos:
-~~- Handle job crashing vs slurm errors differently~~
+- To contribute please branch and then submit a PR.
+- ~~Handle job crashing vs slurm errors differently~~
 - I think that it will crash a job if the checkpoint gets corrupted while being written
-- Add functionality to cancel jobs if the executor dies, or the user wants to.
+- ~~Add functionality to cancel jobs if the executor dies, or the user wants to.
     Right now if the main file crashes, the jobs will still keep runing, just without
-    being requeued if needed.
-
+    being requeued if needed.~~
 

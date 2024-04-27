@@ -10,8 +10,8 @@ class BaseJobConfig:
     def __post_init__(self):
         # Do something here that is smart for the parameters:
         pass
-    
- 
+
+
 @dataclass
 class WandbConfig:
     # Change these values to your liking
@@ -20,5 +20,5 @@ class WandbConfig:
     tags: Union[str, list] = "default_tags"
     notes: str = "default_notes"
     resume: str = "allow"
-    id: str = None   # You MUST overide this value with a unique id that can be used to resume the run
-    mode: str ="online"  # Only change this if you want the runs to be "offline"
+    mode: str = "online"  # Wandb sometimes causes problems with the voulume of api calls so you can set this to "ofline"
+    id: str = None  # You MUST overide this value with a unique id that can be used to resume the run
