@@ -37,6 +37,7 @@ class ExampleMNISTJob(BaseJob):
             download=True,
             transform=torchvision.transforms.ToTensor()
         )
+
         self.data_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=self.job_config.batch_size,
