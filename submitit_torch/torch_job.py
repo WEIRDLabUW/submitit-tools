@@ -44,8 +44,8 @@ class TorchJob(BaseJob):
         print(f"world size: {dist_env.world_size}")
         print(f"local rank: {dist_env.local_rank}")
         print(f"local world size: {dist_env.local_world_size}")
-        print(f"nvidia-smi output = {run_nvidia_smi()}")
-        print(f"Cuda is {torch.cuda.is_available()}")
+        # print(f"nvidia-smi output = {run_nvidia_smi()}")
+        # print(f"Cuda is {torch.cuda.is_available()}")
 
         torch.distributed.init_process_group(backend="nccl")
         assert dist_env.rank == torch.distributed.get_rank()
@@ -70,16 +70,14 @@ class TorchJob(BaseJob):
         self.model = self.model.cuda()
         # print(f"Model device is {next(model.parameters()).device}")
 
-
         if self.job_config.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
 
         if self.checkpoint_exists():
             self.load_checkpoint()
-        print('next_error spot')
-        self.model = DDP(self.model, device_ids=[self.local_rank])
 
-        print("initializing wandb")
+        self.model = DDP(self.model).cuda()
+
         # initalize wandb:
         if self.global_rank == 0:
             wandb.init(**asdict(self._wandb_config))
