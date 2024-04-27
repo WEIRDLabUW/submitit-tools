@@ -132,9 +132,9 @@ todo
 
 ## Notes and todos:
 - To contribute please branch and then submit a PR.
-~~- Handle job crashing vs slurm errors differently~~
+- ~~Handle job crashing vs slurm errors differently~~
 - I think that it will crash a job if the checkpoint gets corrupted while being written
-~~- Add functionality to cancel jobs if the executor dies, or the user wants to.
+- ~~Add functionality to cancel jobs if the executor dies, or the user wants to.
     Right now if the main file crashes, the jobs will still keep runing, just without
     being requeued if needed.~~
 
