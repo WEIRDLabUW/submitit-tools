@@ -21,7 +21,7 @@ class SimpleAddJobConfig(BaseJobConfig):
 @dataclass
 class ExampleExecutorConfig(SubmititExecutorConfig):
     timeout_min: int = 4
-    partition: str = "ckpt"
+    slurm_partition: str = "ckpt"
 
 
 # 3. Programatically describe how you will vary each Base Config.
@@ -41,7 +41,7 @@ for i in range(10):
 # 3. This is the Job description.
 # First, configure both:
 #    RunConfig: what is passed to the Job
-#    WandBConfig: how it is logged   
+#    WandBConfig: how it is logged
 # Second, describe what happens on "__call__"
 class SimpleAddJob(BaseJob):
 
@@ -67,7 +67,7 @@ state = SubmititState(
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
     max_retries=1,
-    num_concurent_jobs=4
+    num_concurrent_jobs=4
 )
 
 # 5. Keep track of state while all jobs are running.
