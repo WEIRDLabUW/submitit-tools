@@ -1,4 +1,5 @@
 outputs/
+data/
 .wandb/
 .vscode/
 .idea/
