@@ -67,7 +67,9 @@ class TorchJob(BaseJob):
         print('pre error')
         print(f"Cuda visible devices is {torch.cuda._parse_visible_devices()}")
         print(f"My local rank is {self.local_rank}")
-        self.model = self.model.to(self.local_rank)
+        self.model = self.model.cuda()
+        print(f"Model device is {next(model.parameters()).device}")
+
         print('post error')
 
         if self.job_config.use_amp:
