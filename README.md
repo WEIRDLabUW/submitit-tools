@@ -90,16 +90,17 @@ class CustomJob(BaseJob):
 ```
 
 Then you can create an executor state which handles the job submission and management:
+
 ```python
 from submitit_tools import SubmititState
 from submitit_configs import SubmititExecutorConfig
 import time
 
 config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
-                                    slurm_name="submitit-test",
-                                    timeout_min=60 * 2,
-                                    cpus_per_task=16,
-                                    mem_gb=24)
+                                slurm_name="submitit-test",
+                                timeout_min=60 * 2,
+                                cpus_per_task=16,
+                                mem_gb=24)
 # Create your list of job configs and wandb configs. 
 # They need to be the same length
 job_configs, wandb_configs = generate_train_configs()
@@ -110,7 +111,7 @@ state = SubmititState(
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
     max_retries=4,
-    num_concurent_jobs=-1
+    num_concurrent_jobs=-1
 )
 
 # Monitor the progress of your jobs. You can do more 

@@ -67,7 +67,7 @@ state = SubmititState(
     job_wandb_configs=wandb_configs,
     with_progress_bar=True,
     max_retries=1,
-    num_concurent_jobs=4
+    num_concurrent_jobs=4
 )
 
 # 5. Keep track of state while all jobs are running.

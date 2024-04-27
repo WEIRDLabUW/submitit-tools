@@ -81,7 +81,7 @@ def main():
         job_wandb_configs=wandb_config,
         with_progress_bar=True,
         output_error_messages=True,
-        num_concurent_jobs=num_jobs,
+        num_concurrent_jobs=num_jobs,
     )
 
     while executor.done() is False:

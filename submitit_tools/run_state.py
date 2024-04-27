@@ -22,7 +22,7 @@ class SubmititState:
                  with_progress_bar: bool = False,
                  output_error_messages: bool = True,
                  max_retries: int = 5,
-                 num_concurent_jobs: int = 10,
+                 num_concurrent_jobs: int = 10,
                  cancel_on_exit: bool = True):
         """
         Initializes the SubmititState instance.
@@ -36,7 +36,7 @@ class SubmititState:
         :param with_progress_bar: A boolean indicating whether to display a progress bar for the jobs
         :param output_error_messages: A boolean indicating whether to output more verbose error messages
         :param max_retries: The maximum number of times to retry a job if it is interrupted
-        :param num_concurent_jobs: The number of jobs to run concurrently
+        :param num_concurrent_jobs: The number of jobs to run concurrently
         :param cancel_on_exit: A boolean indicating whether to cancel all jobs when the main process exits
         """
         assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
@@ -52,7 +52,7 @@ class SubmititState:
             zip(job_run_configs, job_wandb_configs)
         ]
 
-        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurent_jobs if num_concurent_jobs > 0
+        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurrent_jobs if num_concurrent_jobs > 0
                                                                          else len(self.pending_jobs))
 
         self.finished_jobs: List[JobBookKeeping] = []
