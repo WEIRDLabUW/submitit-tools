@@ -1,3 +1,5 @@
+import time
+
 import torchvision
 import wandb
 
@@ -51,7 +53,7 @@ def main():
     )
     executor_config = SubmititExecutorConfig(
         slurm_additional_parameters={},
-        slurm_gpus_per_node=4,
+        slurm_gpus_per_node="l40:4",
         slurm_ntasks_per_node=4,
         slurm_name="submitit-test",
         timeout_min=60 * 2,
@@ -73,8 +75,10 @@ def main():
 
     while executor.done() is False:
         executor.update_state()
+        time.sleep(1)
 
     print(executor.results)
+    time.sleep(5)
 
 
 if __name__ == '__main__':
