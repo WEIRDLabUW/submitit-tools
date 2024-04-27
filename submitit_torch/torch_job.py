@@ -82,7 +82,6 @@ class TorchJob(BaseJob):
         if self.global_rank == 0:
             wandb.init(**asdict(self._wandb_config))
             wandb.config.update(asdict(self.job_config))
-        print("wandb initalized")
         print(f"nvidia-smi output = {run_nvidia_smi()}")
 
     def _job_call(self):
