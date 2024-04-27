@@ -65,7 +65,7 @@ def main():
     job_config, wandb_config = generate_jobs(num_jobs)
 
     executor_config = SubmititExecutorConfig(
-        slurm_gpus_per_node=f"l40:{gpus_per_job}",
+        slurm_gpus_per_node=f"a40:{gpus_per_job}",
         slurm_ntasks_per_node=gpus_per_job,
         slurm_name="submitit-test",
         timeout_min=60 * 2,
