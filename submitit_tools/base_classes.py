@@ -77,6 +77,7 @@ class BaseJob(ABC):
             except Exception as e:
                 print(e)
                 traceback.print_exc()
+                # This means that the job failed and it was the user's fault, not submitit
                 return FailedJobState(e, self.job_config, self.wandb_config)
             self.initialized = True
 
