@@ -3,7 +3,7 @@ from dataclasses import asdict
 
 import submitit
 import os
-
+import traceback
 import wandb
 
 from submitit_configs import BaseJobConfig, WandbConfig
@@ -76,6 +76,7 @@ class BaseJob(ABC):
                 self._initialize()
             except Exception as e:
                 print(e)
+                traceback.print_exc()
                 return FailedJobState(e, self.job_config, self.wandb_config)
             self.initialized = True
 
@@ -83,6 +84,7 @@ class BaseJob(ABC):
             return self._job_call()
         except Exception as e:
             print(e)
+            traceback.print_exc()
             # This means that the job failed and it was the user's fault, not submitit
             return FailedJobState(e, self.job_config, self.wandb_config)
 
