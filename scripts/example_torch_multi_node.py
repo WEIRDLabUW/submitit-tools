@@ -11,10 +11,7 @@ import torch.nn as nn
 
 
 def get_loss(net, x, y):
-    print(x.shape)
     pred = net(x)
-    print(pred.shape)
-    print(y.shape)
     return torch.nn.functional.cross_entropy(pred, y)
 
 
