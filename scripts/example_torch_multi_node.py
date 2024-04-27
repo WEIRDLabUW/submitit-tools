@@ -41,9 +41,12 @@ def create_artifacts(config: TorchMultiprocessingJobConfig):
 def main():
     job_config = TorchMultiprocessingJobConfig(get_loss=get_loss, create_artifacts=create_artifacts, batch_size=64)
     wandb_config = WandbConfig(
-        project="submitit-torch-test",
-        tags=["torch", "mnist"],
-        id=wandb.util.generate_id(),
+        project="submitit-test-multinode",
+        name=f"Running multinode",
+        tags=["mnist", "test"],
+        notes="This is a test run",
+        resume="allow",
+        id=wandb.util.generate_id()
     )
     executor_config = SubmititExecutorConfig(
         slurm_additional_parameters={},
