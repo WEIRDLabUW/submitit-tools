@@ -155,7 +155,10 @@ class TorchJob(BaseJob):
         periodically in your job incase it is killed and requeued. ONLY CALL THIS IN YOUR _job_call METHOD
         """
         model = self.model
-        raw_model = model.module if hasattr(model, "module") else model
+
+        # This unwraps the state dict from both torch.compile() as well as DDP()
+        raw_model = model._orig_mod if hasattr(model, "_orig_mod") else model
+        raw_model = model.module if hasattr(model, "module") else raw_model
         snapshot = Snapshot(
             model_state=raw_model.state_dict(),
             optimizer_state=self.optimizer.state_dict(),
