@@ -57,10 +57,11 @@ class SubmititState:
 
         self.finished_jobs: List[JobBookKeeping] = []
 
-        self._update_submitted_queue()
-
         if cancel_on_exit:
             atexit.register(self._cancel_all)
+
+        self._update_submitted_queue()
+
 
     def _init_executor_(self, config: SubmititExecutorConfig):
         """

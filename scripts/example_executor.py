@@ -22,6 +22,7 @@ class SimpleAddJobConfig(BaseJobConfig):
 class ExampleExecutorConfig(SubmititExecutorConfig):
     timeout_min: int = 4
     slurm_partition: str = "ckpt"
+    root_folder: str = "logging_dir"
 
 
 # 3. Programatically describe how you will vary each Base Config.
@@ -44,15 +45,19 @@ for i in range(10):
 #    WandBConfig: how it is logged
 # Second, describe what happens on "__call__"
 class SimpleAddJob(BaseJob):
+    def __init__(self, job_config: SimpleAddJobConfig, wandb_config: None):
+        super().__init__(job_config, wandb_config)
+        # Initialize things here if you need to, but this does not run on the allocated node but instead your
+        # main process
+
+    def _initialize(self):
+        # Since all of the information is in the configs, we do not need to
+        # Initialize anything here.
+        pass
 
     def _job_call(self):
         time.sleep(5)
         return self.job_config.first_number + self.job_config.second_number
-
-    def _initialize(self):
-        # Since all of the information is in the configs, we do not need to
-        # Initialize anything here
-        pass
 
     def _checkpoint(self):
         # Since this is a simple addition task, we do not need to checkpoint

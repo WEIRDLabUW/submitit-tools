@@ -101,8 +101,9 @@ class BaseJob(ABC):
     @abstractmethod
     def _initialize(self):
         """
-        This method is called by the call method and initalizes the object. Make sure to implement this
-        with all the field definitions that you need.
+        This method is called by the call method and initializes the object. Make sure to implement this
+        with all the field definitions that you need. Once this method has been called, it is assumed safe to call
+        ``_save_checkpoint`` at any time
         """
         raise NotImplementedError("This method must be implemented")
 

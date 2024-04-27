@@ -7,7 +7,7 @@ class SubmititExecutorConfig:
     slurm_ntasks_per_node: int = 1  # The number of tasks per node
     slurm_gpus_per_node: str = "a40:1"  # The number of gpus that the job will take
     slurm_nodes: int = 1  # The number of nodes utilized
-    root_folder: str = "default_root_folder"  # This is the root folder to where submitit output is saved
+    root_folder: str = "default_root_folder"  # This is the root folder to where submitit logs are saved
     slurm_name: str = "experiment"  # This is the name of the job that shows up on squeue
     timeout_min: int = (4 * 60) - 1  # This is the timeout in minutes
     cpus_per_task: int = 4  # This is the number of cpus per task
