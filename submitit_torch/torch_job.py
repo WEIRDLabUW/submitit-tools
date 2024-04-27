@@ -44,8 +44,6 @@ class TorchJob(BaseJob):
         print(f"world size: {dist_env.world_size}")
         print(f"local rank: {dist_env.local_rank}")
         print(f"local world size: {dist_env.local_world_size}")
-        # print(f"nvidia-smi output = {run_nvidia_smi()}")
-        # print(f"Cuda is {torch.cuda.is_available()}")
 
         torch.distributed.init_process_group(backend="nccl")
         assert dist_env.rank == torch.distributed.get_rank()
@@ -64,21 +62,20 @@ class TorchJob(BaseJob):
         self.test_loader = self._prepare_dataloader(test_dataset) if test_dataset is not None else None
 
         self.epochs_run = 0
-        # print('pre error')
-        # print(f"Cuda visible devices is {torch.cuda._parse_visible_devices()}")
-        # print(f"My local rank is {self.local_rank}")
+
         self.model = self.model.cuda()
-        # print(f"Model device is {next(model.parameters()).device}")
 
         if self.job_config.use_amp:
             self.scaler = torch.cuda.amp.GradScaler()
 
         if self.checkpoint_exists():
             self.load_checkpoint()
+        if self.job_config.compile:
+            self.model = torch.compile(self.model)
 
         self.model = DDP(self.model).cuda()
 
-        # initalize wandb:
+        # initialize wandb:
         if self.global_rank == 0:
             wandb.init(**asdict(self._wandb_config))
             wandb.config.update(asdict(self.job_config))
@@ -115,11 +112,11 @@ class TorchJob(BaseJob):
                     # assumes that this is the reduce on plateau one
                     self.lr_scheduler.step(metrics=avg_loss)
                 print(f"Epoch {epoch} completed with rank {self.global_rank}")
+        if self.global_rank == 0:
+            # Run final things here
+            pass
+
         return f"Final loss is {avg_loss}"
-        # if self.global_rank == 0:
-        #     self._save_snapshot(epoch)
-        #     if self.use_wandb:
-        #         wandb.save(self.config.snapshot_path)
 
     def _run_batch(self, source, targets, train: bool = True) -> float:
         with torch.set_grad_enabled(train), torch.amp.autocast(device_type="cuda", dtype=torch.float16,
