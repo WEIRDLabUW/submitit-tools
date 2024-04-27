@@ -54,6 +54,11 @@ def generate_jobs(num_jobs: int):
             resume="allow",
             id=wandb.util.generate_id()
         )
+
+        job_configs.append(job_config)
+        wandb_configs.append(wandb_config)
+    return job_configs, wandb_configs
+
 def main():
     num_jobs = 4
     gpus_per_job = 2
