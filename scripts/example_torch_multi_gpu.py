@@ -40,36 +40,48 @@ def create_artifacts(config: TorchMultiprocessingJobConfig):
     )
     return model, optimizer, train_dataset, None
 
+def generate_jobs(num_jobs: int):
+    job_configs = []
+    wandb_configs = []
+    for i in range(num_jobs):
+        job_config = TorchMultiprocessingJobConfig(get_loss=get_loss, create_artifacts=create_artifacts, batch_size=64
+                                                   ,checkpoint_name=f"job{i}_checkpoint.pt")
+        wandb_config = WandbConfig(
+            project="submitit-test-multinode",
+            name=f"Running multinode {i}",
+            tags=["mnist", "test"],
+            notes="This is a test run",
+            resume="allow",
+            id=wandb.util.generate_id()
+        )
+
+        job_configs.append(job_config)
+        wandb_configs.append(wandb_config)
+    return job_configs, wandb_configs
 
 def main():
-    job_config = TorchMultiprocessingJobConfig(get_loss=get_loss, create_artifacts=create_artifacts, batch_size=64)
-    wandb_config = WandbConfig(
-        project="submitit-test-multinode",
-        name=f"Running multinode",
-        tags=["mnist", "test"],
-        notes="This is a test run",
-        resume="allow",
-        id=wandb.util.generate_id()
-    )
+    num_jobs = 4
+    gpus_per_job = 2
+    job_config, wandb_config = generate_jobs(num_jobs)
+
     executor_config = SubmititExecutorConfig(
-        slurm_gpus_per_node="l40:4",
-        slurm_ntasks_per_node=4,
+        slurm_gpus_per_node=f"l40:{gpus_per_job}",
+        slurm_ntasks_per_node=gpus_per_job,
         slurm_name="submitit-test",
         timeout_min=60 * 2,
         cpus_per_task=8,
         mem_gb=64,
-        slurm_partition="gpu-l40"
+        slurm_partition="ckpt"
     )
-
-    print(executor_config)
 
     executor = SubmititState(
         TorchJob,
         executor_config=executor_config,
-        job_run_configs=[job_config],
-        job_wandb_configs=[wandb_config],
+        job_run_configs=job_config,
+        job_wandb_configs=wandb_config,
         with_progress_bar=True,
-        output_error_messages=True
+        output_error_messages=True,
+        num_concurent_jobs=num_jobs,
     )
 
     while executor.done() is False:
