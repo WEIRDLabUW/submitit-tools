@@ -11,7 +11,7 @@ import torch.nn as nn
 
 
 def get_loss(net, x, y):
-    return torch.nn.functional.mse_loss(net(x), y)
+    return torch.nn.functional.cross_entropy(net(x), y)
 
 
 def create_artifacts(config: TorchMultiprocessingJobConfig):
