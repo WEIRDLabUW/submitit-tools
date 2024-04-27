@@ -17,6 +17,7 @@ pip install git+git@github.com:WEIRDLabUW/submitit-tools.git
 ## Usage:
 
 #### To see examples that are concrete, run `python scripts/example_torch_run.py`. This is a good entry point and will train up 9 mnest networks. Note you will need torch and torchvision in your conda environment.
+There is also a good example with comments in `scripts/example_executor.py`.
 
 For usage, you should only need to define a job class, run config. The rest is just instantiating configs and passing
 them to submitit tools.
@@ -130,8 +131,8 @@ todo
 ## Notes and todos:
 ~~- Handle job crashing vs slurm errors differently~~
 - I think that it will crash a job if the checkpoint gets corrupted while being written
-- Add functionality to cancel jobs if the executor dies, or the user wants to.
+~~- Add functionality to cancel jobs if the executor dies, or the user wants to.
     Right now if the main file crashes, the jobs will still keep runing, just without
-    being requeued if needed.
+    being requeued if needed.~~
 
 

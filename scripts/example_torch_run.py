@@ -86,7 +86,6 @@ class ExampleMNISTJob(BaseJob):
             self._save_checkpoint()
         return f"Success! Paramaters: {asdict(self.job_config)}"
 
-
     def _save_checkpoint(self):
         # Save the checkpoing.
         state_dict = {
@@ -119,8 +118,6 @@ def generate_train_configs():
     return job_configs, wandb_configs
 
 
-
-
 def main():
     config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
                                     slurm_name="submitit-test",
@@ -144,6 +141,8 @@ def main():
 
     for result in state.results:
         print(result)
+
+    time.sleep(5)
 
 
 if __name__ == "__main__":
