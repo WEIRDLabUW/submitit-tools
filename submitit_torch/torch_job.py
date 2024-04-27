@@ -37,7 +37,7 @@ class TorchJob(BaseJob):
         self._wandb_config: WandbConfig = wandb_config
 
     def _initialize(self):
-        os.environ["CUDA_LAUNCH_BLOCKING"] = 1
+        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
         dist_env = submitit.helpers.TorchDistributedEnvironment().export()
 
