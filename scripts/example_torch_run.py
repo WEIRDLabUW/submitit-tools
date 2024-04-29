@@ -81,7 +81,8 @@ class ExampleMNISTJob(BaseJob):
 
             # Important: You need to add the step flag
             wandb.log({"epoch_loss": epoch_loss}, step=epoch)
-            self.completed_epochs = epoch
+            # add 1 to make sure that it does not repeat the epoch
+            self.completed_epochs = epoch + 1
             # NOTE: You must do the checkpoint regularly.
             self._save_checkpoint()
         return f"Success! Paramaters: {asdict(self.job_config)}"

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Union
 
 
 @dataclass
@@ -16,3 +17,7 @@ class SubmititExecutorConfig:
 
     # This is the extra paramater dictionary where args become SBATCH commands. Probably do not need to use
     slurm_additional_parameters: dict = field(default_factory=lambda: {})
+    
+    # These paramaters control the mail to aspects of slurm. They default to None which does not send any emails.
+    slurm_mail_user: Union[str, None] = None  # overide with your email, e.g "jacob33@uw.edu"
+    slurm_mail_type: Union[str, None] = None  # overide with the type of email you want, e.g "BEGIN,END"
