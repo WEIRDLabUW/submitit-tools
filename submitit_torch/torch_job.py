@@ -95,6 +95,7 @@ class TorchJob(BaseJob):
                 test_avg_loss = self._run_epoch(epoch, self.test_loader, train=False)
                 test_loss = torch.tensor([test_avg_loss]).cuda()
                 dist.reduce(test_loss, 0, dist.ReduceOp.SUM)
+            self.epochs_run = epoch
             if self.global_rank == 0:
                 print(f"In epoch {epoch} with rank {self.global_rank} the loss is {avg_loss}")
                 log_dict = {"loss": avg_loss, "learning_rate": self.optimizer.param_groups[0]['lr']}
@@ -106,6 +107,7 @@ class TorchJob(BaseJob):
                     wandb.log(log_dict, step=epoch)
 
                 if epoch % self.job_config.save_every == 0:
+
                     self._save_checkpoint()
 
                 if self.lr_scheduler:
