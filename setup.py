@@ -12,5 +12,5 @@ setup(
     version='0.1.0',
     description='A package to manage submitit jobs',
     author='Weird Lab',
-    requires=requirements
+    install_requires=requirements
 )
