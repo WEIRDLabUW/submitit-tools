@@ -11,7 +11,7 @@ pip install -e .
 ```
 Alternatively, you can install it like this:
 ```bash
-pip install git+git@github.com:WEIRDLabUW/submitit-tools.git
+pip install git+https://github.com/WEIRDLabUW/submitit-tools.git
 ```
 
 ## Usage:
