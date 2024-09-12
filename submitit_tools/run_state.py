@@ -18,7 +18,7 @@ class SubmititState:
                  job_cls: Type[BaseJob],
                  executor_config: SubmititExecutorConfig,
                  job_run_configs: List[BaseJobConfig],
-                 job_wandb_configs: List[Union[WandbConfig, None]],
+                 job_wandb_configs: Union[List[Union[WandbConfig, None]], None],
                  with_progress_bar: bool = False,
                  output_error_messages: bool = True,
                  max_retries: int = 5,
@@ -32,13 +32,15 @@ class SubmititState:
         :param job_run_configs: A list of configurations for each job to be run.
             Each configuration should be a derivation of  ``BaseJobConfig``.
         :param job_wandb_configs: A list of configurations for Weights & Biases for each job.
-            Each configuration should be either an instance of ``WandbConfig`` or None.
+            Each configuration should be either an instance of ``WandbConfig`` or None. You can instead pass None if not using wandb
         :param with_progress_bar: A boolean indicating whether to display a progress bar for the jobs
         :param output_error_messages: A boolean indicating whether to output more verbose error messages
         :param max_retries: The maximum number of times to retry a job if it is interrupted
         :param num_concurrent_jobs: The number of jobs to run concurrently
         :param cancel_on_exit: A boolean indicating whether to cancel all jobs when the main process exits
         """
+        if job_wandb_configs is None:
+            job_wandb_configs = [None for _ in range(len(job_run_configs))]
         assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
 
         self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
