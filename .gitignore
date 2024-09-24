@@ -1,5 +1,7 @@
 outputs/
 data/
+build/
+dist/
 .wandb/
 .vscode/
 .idea/
