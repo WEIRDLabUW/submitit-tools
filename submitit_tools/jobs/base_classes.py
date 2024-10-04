@@ -6,7 +6,7 @@ import os
 import traceback
 import wandb
 
-from submitit_configs import BaseJobConfig, WandbConfig
+from submitit_tools.configs import BaseJobConfig, WandbConfig
 from typing import Union
 
 

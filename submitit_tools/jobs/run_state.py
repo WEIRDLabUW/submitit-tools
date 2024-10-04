@@ -5,8 +5,8 @@ import atexit
 import submitit
 from tqdm.auto import tqdm
 
-from submitit_configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
-from submitit_tools.base_classes import BaseJob, JobBookKeeping, FailedJobState
+from submitit_tools.configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
+from submitit_tools.jobs.base_classes import BaseJob, JobBookKeeping, FailedJobState
 
 
 class SubmititState:

@@ -1,14 +1,13 @@
 import time
-from submitit_configs import SubmititExecutorConfig, WandbConfig
-from submitit_tools import SubmititState
+from submitit_tools.configs import SubmititExecutorConfig, WandbConfig, BaseJobConfig
+from submitit_tools.jobs import BaseJob, SubmititState
+
 import os
 from dataclasses import dataclass, asdict
 import torch
 import torch.nn as nn
 import torchvision
 
-from submitit_configs import BaseJobConfig, WandbConfig
-from submitit_tools import BaseJob
 import wandb
 
 
