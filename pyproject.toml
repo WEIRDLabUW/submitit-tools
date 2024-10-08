@@ -1,5 +1,5 @@
 [project]
-name = "submitit_tools"
+name = "submitit-tools"
 version = "0.1.0"
 description = "A package to manage slurm jobs on a HPC cluster"
 authors = [
