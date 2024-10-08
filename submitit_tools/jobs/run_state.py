@@ -149,14 +149,17 @@ class SubmititState:
                     result = current_job.job.results()
                 for r in result:
                     if isinstance(r, FailedJobState):
-                        # If we get here, the job failed, and it is the user's fault
+                        # If we get here, the job failed, and it is the user's fault (so don't requeue)
                         print(
-                            f"Failed job due to user error with path:"
+                            f"\033[91mFailed job due to user error with checkpoint path:\033[0m"
                             f" {r.job_config.checkpoint_path}/{r.job_config.checkpoint_name}"
                         )
 
                         if self.output_error_messages:
-                            print(f"Error: {r.exception}")
+                            print(f"Config: {r.job_config}")
+                            print(f"\033[38;5;208mError: {r.exception}\033[0m")
+                            print(f"\033[38;5;208mStack Trace:\033[0m\n{r.stack_trace}")
+
 
                 # Either way put the job in the finished jobs as putting it back in the queue won't help
                 self._remove_job(i, result)
@@ -168,9 +171,11 @@ class SubmititState:
                     print(f"Error: {e}")
                 # Requeue Logic
                 if current_job.retries > self.max_retries:
-                    self._remove_job(i, FailedJobState(None, current_job.job_config, current_job.wandb_config))
-                    print(f"Job {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries")
-                    print(f"Error: {e}")
+                    self._remove_job(i, FailedJobState(TimeoutError("too many retries"), "to_many_retries",
+                                                       current_job.job_config, current_job.wandb_config))
+                    print(f"\033[94mJob {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries\033[0m")
+                    if self.output_error_messages:
+                        print(f"Error: {e}")
                     continue
 
                 # Resubmit the job

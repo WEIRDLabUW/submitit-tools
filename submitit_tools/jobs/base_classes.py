@@ -13,13 +13,15 @@ from typing import Union
 class FailedJobState:
     "Class to represent a failed job"
 
-    def __init__(self, e: Exception, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
+    def __init__(self, e: Exception, stack_trace: str, job_config: BaseJobConfig,
+                 wandb_config: Union[WandbConfig, None]):
         self.exception = e
+        self.stack_trace = stack_trace
         self.job_config = job_config
         self.wandb_config = wandb_config
 
     def __str__(self):
-        return str(self.exception)
+        return f"Exception: {str(self.exception)}\n\nStack Trace:\n{self.stack_trace}"
 
 
 class JobBookKeeping:
@@ -75,21 +77,21 @@ class BaseJob(ABC):
             try:
                 self._initialize()
             except Exception as e:
-                # Print the exception for logging purposes
-                print(e)
-                traceback.print_exc()
+                # Print the exception for logging purposes (moved to run_state)
+                # print(e)
+                # traceback.print_exc()
                 # This means that the job failed and it was the user's fault, not submitit
-                return FailedJobState(e, self.job_config, self.wandb_config)
+                return FailedJobState(e, traceback.format_exc(), self.job_config, self.wandb_config)
             self.initialized = True
 
         try:
             return self._job_call()
         except Exception as e:
-            # Print the exception for logging purposes
-            print(e)
-            traceback.print_exc()
+            # Print the exception for logging purposes (moved to the run_state)
+            # print(e)
+            # traceback.print_exc()
             # This means that the job failed and it was the user's fault, not submitit
-            return FailedJobState(e, self.job_config, self.wandb_config)
+            return FailedJobState(e, traceback.format_exc(), self.job_config, self.wandb_config)
 
     @abstractmethod
     def _job_call(self):
