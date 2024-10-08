@@ -16,9 +16,9 @@ class SubmititExecutorConfig:
     slurm_name: str = "experiment"  # This is the name of the job that shows up on squeue
     timeout_min: int = (4 * 60) - 1  # This is the timeout in minutes
     cpus_per_task: int = 4  # This is the number of cpus per task
-    mem_gb: int = 10  # This is the amount of ram required
+    mem_gb: int = 10  # This is the amount of ram required per node
     slurm_partition: str = "ckpt-all"  # This is the partition to which the job is submitted
-    slurm_constraint: str = None # the constraints on the nodes that you need (i.e gpu types), like "l40s|"
+    slurm_constraint: str = None # the constraints on the nodes that you need (i.e gpu types), like "l40s|a40"
     # This is the extra paramater dictionary where args become SBATCH commands. Probably do not need to use
     slurm_additional_parameters: dict = field(default_factory=lambda: {})
     

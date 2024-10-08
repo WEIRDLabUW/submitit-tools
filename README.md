@@ -1,4 +1,4 @@
-# submitit-tools
+# submitit-tools (ST)
 
 This repository aims to give a simple way to submit jobs to Hyak integrating in weights and biases. I personally find it very useful at a small scale, but it's main purpose is to manage and run lots and lots of hyak runs. You can install it as a library
 or as a submodule in your repository. Any changes or bug fixes are welcome!
@@ -26,38 +26,43 @@ them to submitit tools.
 
 ### Important things to note:
 - You need to make sure that the checkpoint path is **unique for each run**. If it is not,
-    it will just load the checkpointing from the previous run and then imediatly finish.
+    it will just load the checkpointing from the previous run and then imediatly finish or cause other weird bugs.
 - You can use the results from the submitit state, and add no checkpointing functionality which 
-    would work on runs on the weird-lab partitions where you know they won't be interrupted or prempted
-- You do not have to use the WANDB config and can instead handle wandb yourself. If you choose to do so, make sure that you handle the checkpointing and resuming of WANDB runs. You can look into this codebase to get insight into how to do this
+    would work on runs on the lab partitions where you know they won't be interrupted or prempted. The util 
+- You do not have to use the WANDB config and can instead handle wandb yourself. If you choose to do so, make sure that you handle the checkpointing and resuming of wandb runs if you expect this to come up. You can look into this code-base to get insight into how to do this
 
 
 ## Paramaters you want to change in the submitit executor config:
 This is the base executor config with all of the paramaters. You don't usually have to touch all of them
 ```python
+@dataclass
 class SubmititExecutorConfig:
     root_folder: str = "default_root_folder"  # This is the root folder to where submitit logs are saved
-    slurm_account: str = "weirdlab"  # This is the account to which the job is ran from i.e weirdlab or rselab
+    # Debug mode. It will run your jobs in the main process. This makes all the below parameters unused. Default to false
+    debug_mode: bool = False
+    
+    # If not debugging:
+    slurm_account: str = "weirdlab"  # This is the account to which the job is ran from
     slurm_ntasks_per_node: int = 1  # The number of tasks per node. You should keep this as 1 unless running distributed training
-    slurm_gpus_per_node: str = "a40:1"  # The number of gpus that the node will have
+    slurm_gpus_per_node: str = "a40:1"  # The number of gpus that the job will take, can be of form 1 or type:#
     slurm_nodes: int = 1  # The number of nodes utilized
     slurm_name: str = "experiment"  # This is the name of the job that shows up on squeue
-    timeout_min: int = (4 * 60) - 1  # This is the timeout of your job in minutes
+    timeout_min: int = (4 * 60) - 1  # This is the timeout in minutes
     cpus_per_task: int = 4  # This is the number of cpus per task
-    mem_gb: int = 10  # This is the amount of ram per node
+    mem_gb: int = 10  # This is the amount of ram required per node
     slurm_partition: str = "ckpt-all"  # This is the partition to which the job is submitted
+    slurm_constraint: str = None # the constraints on the nodes that you need (i.e gpu types), like "l40s|a40"
+    # This is the extra paramater dictionary where args become SBATCH commands. Probably do not need to use but if you do, it will be written like --SBATCH key=value in the submitted bash script.
 
-    # This is the extra paramater dictionary where args become SBATCH commands. Probably do not need to use but anything you put
-    # here will be written like --SBATCH key=value in the submitted job.
     slurm_additional_parameters: dict = field(default_factory=lambda: {})
     
     # These paramaters control the mail to aspects of slurm. They default to None which does not send any emails.
-    slurm_mail_user: Union[str, None] = None  # overide with your email, e.g "jacob33@uw.edu"
-    slurm_mail_type: Union[str, None] = None  # overide with the type of email you want, e.g "BEGIN,END"
+    slurm_mail_user: Union[str, None] = None  # override with your email, e.g "jacob33@uw.edu"
+    slurm_mail_type: Union[str, None] = None  # override with the type of email you want, e.g "BEGIN,END"
 ```
 
 #### Slurm GPU Paramaters:
-- For the node types, if you want to request a node with a specific gpu number and type, you can do it with a list like this `type1:num,type2:num` where it will asign your job to the first availible node with gpus of that number and type. For example, to use all gpus on the ckpt-all that are powerful, I set `slurm_gpus_per_node="a40:1,l40:1,l40s:1,a100:1"`.
+- For the node types, if you want to request a node with a specific gpu number and type, you can do it with a list like this `type:num` where it will asign your job to the first availible node with gpus of that number and type. You can use the slurm_constraint to request multiple different options. For example, to use all gpus on the ckpt-all that are powerful and 1 per job, I set `slurm_constraints="a40|l40|l40s|a100"` and `slurm_gpus_per_node="1"`.
 
 ## Clear Code Examples:
 
@@ -130,21 +135,21 @@ class ExampleExecutorConfig(SubmititExecutorConfig):
     root_folder: str = "logging_dir"
     timeout_min: int = 4
     slurm_partition: str = "ckpt-all"
-    slurm_gpus_per_node: str = "l40s:1,a40:1,l40:1"
+    slurm_gpus_per_node: str = "1"
+    slurm_constraint:str = "l40s|a40|l40|a100" # This is saying we need a node with these gpus only
 
 config = ExampleExecutorConfig()
-# Create your list of job configs and wandb configs. 
-# They need to be the same length
-job_configs, wandb_configs = generate_train_configs()
+# Create your list of job configs and wandb configs if you are using wandb through st
+job_configs, wandb_configs = generate_your_configs_here
 state = SubmititState(
     job_cls=CustomJob,
     executor_config=config,
     job_run_configs=job_configs,
-    job_wandb_configs=wandb_configs,
-    with_progress_bar=True,
-    max_retries=4,
-    num_concurrent_jobs=-1,
-    cancel_on_exit=True
+    job_wandb_configs=wandb_configs, # can be none if you don't want any
+    with_progress_bar=True, # show tqdm bar
+    max_retries=4, # number of times to requeue if timed out or crashes
+    num_concurrent_jobs=-1, # How many jobs to run at once. -1 is all of them
+    cancel_on_exit=True # To cancel running jobs if the program is exited
 )
 
 # Monitor the progress of your jobs. You can do more 
@@ -153,11 +158,37 @@ while state.done() is False:
     state.update_state()
     time.sleep(1)
 
+# Other option instead of the while loop if no complicated logic. Does the 
+# same as the while loop
+state.run_all_jobs()
+
+
 # Process the results. The results are updated as jobs complete 
 # so you can access this before
 for result in state.results:
     print(result)
 ```
+### Utilities:
+There is a utility to create a job that just runs a function given a config. This job though has no checkpointing functionality but it will requeue if crashes  or times out (I use on ckpt if jobs less than 8h) since don't have to worry about checkpointing logic
+
+```python
+def job_function(job_config):
+    # write the code of your job here
+    pass 
+from submitit_tools.jobs import create_function_job
+JobClass = create_function_job(job_function)
+```
+
+There is also a tool to help with sweeping configs. Using the example `CustomJobConfig`, you can sweep over values of it like this:
+```python
+from submitit_tools.jobs import grid_search_job_configs
+params = {
+    "parameter1": 4
+    "parameter2": [[1,2], [2, 3, 4], [4, 3, 4]]
+}
+job_configs = grid_search_job_configs(params, job_cls = CustomJobConfig)
+```
+This will create 3 jobs (a grid search over the params). You can also pass a custom creation function. Look at the example_torch_job.py for a clear example.
 
 ## Notes and todos:
 - The checkpoint partition is a little weird. You can find the documentation [here](https://hyak.uw.edu/docs/compute/checkpoint/)
@@ -165,6 +196,8 @@ for result in state.results:
 - Want to add a git automation and make this a pypy package
 - ~~Handle job crashing vs slurm errors differently~~
 - I think that it will crash a job if the checkpoint gets corrupted while being written and this will be unrecoverable
+- ~~add utils to grid search and jobs without checkpointing~~
+- ~~add a debug mode~~
 - ~~Figure out requesting multiple types of gpus for large checkpoint runs~~
 - ~~Add functionality to cancel jobs if the executor dies, or the user wants to. Right now if the main file crashes, the jobs will still keep runing, just without  being requeued if needed.~~
 
