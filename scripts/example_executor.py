@@ -1,12 +1,12 @@
 import time
 from dataclasses import dataclass
 
-from submitit_tools import SubmititState, BaseJob
-from submitit_configs import SubmititExecutorConfig, BaseJobConfig, WandbConfig
+from submitit_tools.jobs import SubmititState, BaseJob
+from submitit_tools.configs import SubmititExecutorConfig, BaseJobConfig, WandbConfig
 
 
 # 1. This is the "TopLevel" JobConfig which will be the base
-# for the progrmatic modifications (e.g. to be sweeped). 
+# for the programmatic modifications (e.g. to be swept).
 @dataclass
 class SimpleAddJobConfig(BaseJobConfig):
     first_number: int = 1
@@ -25,7 +25,7 @@ class ExampleExecutorConfig(SubmititExecutorConfig):
     root_folder: str = "logging_dir"
 
 
-# 3. Programatically describe how you will vary each Base Config.
+# 3. Programmatically describe how you will vary each Base Config.
 # For example, sweep the second number value from 0-9
 # Instantiate a list of job configs with corresponding wandb configs.
 job_configs = []
@@ -38,6 +38,15 @@ for i in range(10):
         ))
     wandb_configs.append(None)
 
+# Note, there is a built in utility that does this for you. You can define a custom 
+# initialization method, or just use the default
+from submitit_tools.jobs import grid_search_job_configs
+params ={
+    "first_number": 0,
+    "second_number": [i for i in range(20)]
+}
+
+job_configs = grid_search_job_configs(params, job_cls=SimpleAddJobConfig)
 
 # 3. This is the Job description.
 # First, configure both:
@@ -75,10 +84,8 @@ state = SubmititState(
     num_concurrent_jobs=4
 )
 
-# 5. Keep track of state while all jobs are running.
-while state.done() is False:
-    state.update_state()
-    time.sleep(1)
+# 5. Run all of the jobs.
+state.run_all_jobs()
 
 # 6. Output the results.
 for result in state.results:

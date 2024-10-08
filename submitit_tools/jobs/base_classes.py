@@ -6,20 +6,22 @@ import os
 import traceback
 import wandb
 
-from submitit_configs import BaseJobConfig, WandbConfig
+from submitit_tools.configs import BaseJobConfig, WandbConfig
 from typing import Union
 
 
 class FailedJobState:
     "Class to represent a failed job"
 
-    def __init__(self, e: Exception, job_config: BaseJobConfig, wandb_config: Union[WandbConfig, None]):
+    def __init__(self, e: Exception, stack_trace: str, job_config: BaseJobConfig,
+                 wandb_config: Union[WandbConfig, None]):
         self.exception = e
+        self.stack_trace = stack_trace
         self.job_config = job_config
         self.wandb_config = wandb_config
 
     def __str__(self):
-        return str(self.exception)
+        return f"Exception: {str(self.exception)}\n\nStack Trace:\n{self.stack_trace}"
 
 
 class JobBookKeeping:
@@ -47,7 +49,7 @@ class BaseJob(ABC):
     The __init__ method should take in a JobConfig and a WandbConfig. You can add extra logic
     here but it is not needed.
 
-    Since the job is created and then pickled to the correct compute node, you must overide the
+    Since the job is created and then pickled to the correct compute node, you must override the
     _initialize method to initialize your job with all of the train information
 
     The __call__ method is called once and contains the entire job
@@ -75,21 +77,21 @@ class BaseJob(ABC):
             try:
                 self._initialize()
             except Exception as e:
-                # Print the exception for logging purposes
-                print(e)
-                traceback.print_exc()
+                # Print the exception for logging purposes (moved to run_state)
+                # print(e)
+                # traceback.print_exc()
                 # This means that the job failed and it was the user's fault, not submitit
-                return FailedJobState(e, self.job_config, self.wandb_config)
+                return FailedJobState(e, traceback.format_exc(), self.job_config, self.wandb_config)
             self.initialized = True
 
         try:
             return self._job_call()
         except Exception as e:
-            # Print the exception for logging purposes
-            print(e)
-            traceback.print_exc()
+            # Print the exception for logging purposes (moved to the run_state)
+            # print(e)
+            # traceback.print_exc()
             # This means that the job failed and it was the user's fault, not submitit
-            return FailedJobState(e, self.job_config, self.wandb_config)
+            return FailedJobState(e, traceback.format_exc(), self.job_config, self.wandb_config)
 
     @abstractmethod
     def _job_call(self):

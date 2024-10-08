@@ -1,0 +1,4 @@
+wandb/
+mnist_checkpoints/
+data/
+mnist_submitit_logs/

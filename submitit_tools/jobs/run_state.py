@@ -1,13 +1,14 @@
 from dataclasses import asdict
-from typing import List, Type, Union
+import time
+from typing import List, Type, Union, Any
 import atexit
 
 import submitit
 from tqdm.auto import tqdm
 
-from submitit_configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
-from submitit_tools.base_classes import BaseJob, JobBookKeeping, FailedJobState
-
+from submitit_tools.configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
+from submitit_tools.jobs.base_classes import BaseJob, JobBookKeeping, FailedJobState
+from .utils import update_to_unique_wandb_ids
 
 class SubmititState:
     """
@@ -19,11 +20,12 @@ class SubmititState:
                  executor_config: SubmititExecutorConfig,
                  job_run_configs: List[BaseJobConfig],
                  job_wandb_configs: Union[List[Union[WandbConfig, None]], None],
-                 with_progress_bar: bool = False,
+                 with_progress_bar: bool = True,
                  output_error_messages: bool = True,
                  max_retries: int = 5,
-                 num_concurrent_jobs: int = 10,
-                 cancel_on_exit: bool = True):
+                 num_concurrent_jobs: int = -1,
+                 cancel_on_exit: bool = True
+                 ):
         """
         Initializes the SubmititState instance.
 
@@ -32,7 +34,8 @@ class SubmititState:
         :param job_run_configs: A list of configurations for each job to be run.
             Each configuration should be a derivation of  ``BaseJobConfig``.
         :param job_wandb_configs: A list of configurations for Weights & Biases for each job.
-            Each configuration should be either an instance of ``WandbConfig`` or None. You can instead pass None if not using wandb
+            Each configuration should be either an instance of ``WandbConfig`` or None.
+            You can instead pass None if not using wandb
         :param with_progress_bar: A boolean indicating whether to display a progress bar for the jobs
         :param output_error_messages: A boolean indicating whether to output more verbose error messages
         :param max_retries: The maximum number of times to retry a job if it is interrupted
@@ -41,23 +44,26 @@ class SubmititState:
         """
         if job_wandb_configs is None:
             job_wandb_configs = [None for _ in range(len(job_run_configs))]
+        
+        # update the unique IDs so that the runs can be resumed
+        update_to_unique_wandb_ids(job_wandb_configs)
         assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
 
-        self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
-        self.job_cls: Type[BaseJob] = job_cls
+        self._executor: submitit.AutoExecutor = self._init_executor_(executor_config)
+        self._job_cls: Type[BaseJob] = job_cls
         self.max_retries: int = max_retries
         self.output_error_messages = output_error_messages
         self.progress_bar = tqdm(total=len(job_run_configs), desc="Job Progress") if with_progress_bar else None
 
-        self.pending_jobs: List[JobBookKeeping] = [
+        self._pending_jobs: List[JobBookKeeping] = [
             JobBookKeeping(job_config, wandb_config) for job_config, wandb_config in
             zip(job_run_configs, job_wandb_configs)
         ]
 
-        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurrent_jobs if num_concurrent_jobs > 0
-                                                                         else len(self.pending_jobs))
+        self._running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurrent_jobs if num_concurrent_jobs > 0
+                                                                         else len(self._pending_jobs))
 
-        self.finished_jobs: List[JobBookKeeping] = []
+        self._finished_jobs: List[JobBookKeeping] = []
 
         if cancel_on_exit:
             atexit.register(self._cancel_all)
@@ -71,6 +77,14 @@ class SubmititState:
         """
 
         kwargs = asdict(config)
+        debug_mode = kwargs.pop("debug_mode")
+
+        if debug_mode:
+            # debug so run locally
+            executor = submitit.AutoExecutor(folder=kwargs.pop("root_folder"), cluster="debug")
+            return executor
+        
+        # real run
         executor = submitit.AutoExecutor(folder=kwargs.pop("root_folder"))
         executor.update_parameters(**kwargs)
 
@@ -80,33 +94,48 @@ class SubmititState:
         """
         Private helper method to move jobs from pending to running if possible
         """
-        for i in range(len(self.running_jobs)):
-            if len(self.pending_jobs) == 0:
+        for i in range(len(self._running_jobs)):
+            if len(self._pending_jobs) == 0:
                 # No pending jobs to add
                 return
 
-            if self.running_jobs[i] is not None:
+            if self._running_jobs[i] is not None:
                 # We already have a running job or no pending left at this index so don't do anything
                 continue
             # We have to queue a job if we can
-            job = self.executor.submit(
-                self.job_cls(self.pending_jobs[0].job_config, self.pending_jobs[0].wandb_config)
+            job = self._executor.submit(
+                self._job_cls(self._pending_jobs[0].job_config, self._pending_jobs[0].wandb_config)
             )
-            self.running_jobs[i] = self.pending_jobs.pop(0)
-            self.running_jobs[i].job = job
+            self._running_jobs[i] = self._pending_jobs.pop(0)
+            self._running_jobs[i].job = job
             assert job is not None, "Job is None"
 
+    def run_all_jobs(self, sleep_time: int =1) -> List[Any]:
+        """This code will block and run/update this state until all the jobs are finished.
+        This replaces the user having to make a while loop, and call the update_state() themselves.
+
+        Args:
+            sleep_time (int): How long to wait between calling update_state(). Defaults to 1. 
+            When done, state.done() will be true
+        Returns:
+            List[Any]: The results from the job, same as the self.results attribute
+        """
+        while not self.done():
+            self.update_state()
+            time.sleep(sleep_time)
+        return self.results
+    
     def update_state(self):
         """
         This method is called to update the current state of this object.
         It both finishes completed jobs, as well as starts up the next jobs
         in the queue if possible
         """
-        for i in range(len(self.running_jobs)):
-            if self.running_jobs[i] is None:
+        for i in range(len(self._running_jobs)):
+            if self._running_jobs[i] is None:
                 continue
 
-            current_job = self.running_jobs[i]
+            current_job = self._running_jobs[i]
             assert current_job.job is not None, "Job is running but job is None"
 
             if not current_job.done():
@@ -120,14 +149,17 @@ class SubmititState:
                     result = current_job.job.results()
                 for r in result:
                     if isinstance(r, FailedJobState):
-                        # If we get here, the job failed, and it is the user's fault
+                        # If we get here, the job failed, and it is the user's fault (so don't requeue)
                         print(
-                            f"Failed job due to user error with path:"
+                            f"\033[91mFailed job due to user error with checkpoint path:\033[0m"
                             f" {r.job_config.checkpoint_path}/{r.job_config.checkpoint_name}"
                         )
 
                         if self.output_error_messages:
-                            print(f"Error: {r.exception}")
+                            print(f"Config: {r.job_config}")
+                            print(f"\033[38;5;208mError: {r.exception}\033[0m")
+                            print(f"\033[38;5;208mStack Trace:\033[0m\n{r.stack_trace}")
+
 
                 # Either way put the job in the finished jobs as putting it back in the queue won't help
                 self._remove_job(i, result)
@@ -139,15 +171,17 @@ class SubmititState:
                     print(f"Error: {e}")
                 # Requeue Logic
                 if current_job.retries > self.max_retries:
-                    self._remove_job(i, FailedJobState(None, current_job.job_config, current_job.wandb_config))
-                    print(f"Job {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries")
-                    print(f"Error: {e}")
+                    self._remove_job(i, FailedJobState(TimeoutError("too many retries"), "to_many_retries",
+                                                       current_job.job_config, current_job.wandb_config))
+                    print(f"\033[94mJob {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries\033[0m")
+                    if self.output_error_messages:
+                        print(f"Error: {e}")
                     continue
 
                 # Resubmit the job
                 current_job.retries += 1
-                current_job.job = self.executor.submit(
-                    self.job_cls(current_job.job_config, current_job.wandb_config)
+                current_job.job = self._executor.submit(
+                    self._job_cls(current_job.job_config, current_job.wandb_config)
                 )
 
         # If we ended up finishing a job, we can add a new one
@@ -157,11 +191,11 @@ class SubmititState:
         """Private helper method to remove a job from the currently working
         on queue
         """
-        job_book_keeping = self.running_jobs[idx]
-        self.running_jobs[idx] = None
+        job_book_keeping = self._running_jobs[idx]
+        self._running_jobs[idx] = None
         job_book_keeping.result = result
         job_book_keeping.job = None
-        self.finished_jobs.append(job_book_keeping)
+        self._finished_jobs.append(job_book_keeping)
 
         # Update the progress bar
         if self.progress_bar is not None:
@@ -169,7 +203,7 @@ class SubmititState:
 
     def _cancel_all(self):
         """Private helper method to cancel all running jobs"""
-        for job in self.running_jobs:
+        for job in self._running_jobs:
             if job is not None:
                 job.job.cancel(check=False)
 
@@ -180,7 +214,7 @@ class SubmititState:
         Returns:
             int: The number of tasks left
         """
-        return len(self.pending_jobs) + sum(1 for job in self.running_jobs if job is not None)
+        return len(self._pending_jobs) + sum(1 for job in self._running_jobs if job is not None)
 
     def done(self):
         """This method returns if the entire task is finished
@@ -188,7 +222,7 @@ class SubmititState:
         Returns:
             bool: True if the task is finished, False otherwise
         """
-        return len(self.pending_jobs) == 0 and all(job is None for job in self.running_jobs)
+        return len(self._pending_jobs) == 0 and all(job is None for job in self._running_jobs)
 
     @property
     def results(self):
@@ -197,7 +231,7 @@ class SubmititState:
         have a multitask job there will be nested lists so it is list[list[job results]]. If
         just single task jobs, it will be a list[results] where results are what your job returns
         """
-        return [job.result for job in self.finished_jobs]
+        return [job.result for job in self._finished_jobs]
 
     def __str__(self):
         result = ""
