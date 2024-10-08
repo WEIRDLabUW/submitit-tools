@@ -38,6 +38,15 @@ for i in range(10):
         ))
     wandb_configs.append(None)
 
+# Note, there is a built in utility that does this for you. You can define a custom 
+# initalization method, or just use the default
+from submitit_tools.jobs import grid_search_job_configs
+params ={
+    "first_number": 0,
+    "second_number": [i for i in range(20)]
+}
+
+job_configs = grid_search_job_configs(params, job_cls=SimpleAddJobConfig)
 
 # 3. This is the Job description.
 # First, configure both:
@@ -75,10 +84,8 @@ state = SubmititState(
     num_concurrent_jobs=4
 )
 
-# 5. Keep track of state while all jobs are running.
-while state.done() is False:
-    state.update_state()
-    time.sleep(1)
+# 5. Run all of the jobs.
+state.run_all_jobs()
 
 # 6. Output the results.
 for result in state.results:

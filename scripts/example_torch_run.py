@@ -1,6 +1,6 @@
 import time
 from submitit_tools.configs import SubmititExecutorConfig, WandbConfig, BaseJobConfig
-from submitit_tools.jobs import BaseJob, SubmititState
+from submitit_tools.jobs import BaseJob, SubmititState, grid_search_job_configs
 
 import os
 from dataclasses import dataclass, asdict
@@ -20,6 +20,7 @@ class MNISTRunConfig(BaseJobConfig):
     batch_size: int = 32
 
 
+# training job that trains a mnist network using wandb.
 class ExampleMNISTJob(BaseJob):
     def __init__(self, job_config: MNISTRunConfig, wandb_config: WandbConfig):
         super().__init__(job_config, wandb_config)
@@ -84,7 +85,7 @@ class ExampleMNISTJob(BaseJob):
             self.completed_epochs = epoch + 1
             # NOTE: You must do the checkpoint regularly.
             self._save_checkpoint()
-        return f"Success! Paramaters: {asdict(self.job_config)}"
+        return f"Success! Parameters: {asdict(self.job_config)}"
 
     def _save_checkpoint(self):
         # Save the checkpoing.
@@ -97,29 +98,38 @@ class ExampleMNISTJob(BaseJob):
 
 
 def generate_train_configs():
-    wandb_configs = []
-    job_configs = []
-    for learning_rate in [0.001, 0.01, 0.1]:
-        for batch_size in [32, 64, 128]:
-            job_configs.append(MNISTRunConfig(
+    # Create a custom function to initalize the job configs and wandb configs during the grid
+    # search
+    def creation_fn(learning_rate, batch_size):
+        job =MNISTRunConfig(
                 learning_rate=learning_rate,
                 batch_size=batch_size,
                 checkpoint_name=f"lr_{learning_rate}_bs_{batch_size}.pt",
                 checkpoint_path="mnist_checkpoints"
-            ))
-            wandb_configs.append(WandbConfig(
+            )
+        wdb = WandbConfig(
                 project="mnist_test",
                 name=f"lr_{learning_rate}_bs_{batch_size}",
                 tags=["mnist", "test"],
                 notes="This is a test run",
                 resume="allow",
-                id=wandb.util.generate_id()
-            ))
-    return job_configs, wandb_configs
+            )
+        return (job, wdb)
+    
+    # Define the paramaters to search over
+    params = {
+                "learning_rate": [0.001, 0.01, 0.1],
+                "batch_size": [32, 64, 128],
+            }   
+    # get the configs
+    configs = grid_search_job_configs(params, job_cls=None, job_creation_fn=creation_fn)
+    job_cfgs = [item[0] for item in configs]
+    wandb_cfgs = [item[1] for item in configs]
+    return job_cfgs, wandb_cfgs
 
 
 def main():
-    config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
+    executor_config = SubmititExecutorConfig(root_folder="mnist_submitit_logs",
                                     slurm_partition="gpu-a40",
                                     slurm_name="submitit-test",
                                     timeout_min=60 * 2,
@@ -128,7 +138,7 @@ def main():
     job_configs, wandb_configs = generate_train_configs()
     state = SubmititState(
         job_cls=ExampleMNISTJob,
-        executor_config=config,
+        executor_config=executor_config,
         job_run_configs=job_configs,
         job_wandb_configs=wandb_configs,
         with_progress_bar=True,
@@ -136,14 +146,10 @@ def main():
         num_concurrent_jobs=8
     )
 
-    while state.done() is False:
-        state.update_state()
-        time.sleep(1)
+    state.run_all_jobs()
 
     for result in state.results:
         print(result)
-
-    time.sleep(5)
 
 
 if __name__ == "__main__":
