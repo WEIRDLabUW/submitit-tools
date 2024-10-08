@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 
 from submitit_tools.configs import BaseJobConfig, WandbConfig, SubmititExecutorConfig
 from submitit_tools.jobs.base_classes import BaseJob, JobBookKeeping, FailedJobState
-
+from .utils import update_to_unique_wandb_ids
 
 class SubmititState:
     """
@@ -32,7 +32,8 @@ class SubmititState:
         :param job_run_configs: A list of configurations for each job to be run.
             Each configuration should be a derivation of  ``BaseJobConfig``.
         :param job_wandb_configs: A list of configurations for Weights & Biases for each job.
-            Each configuration should be either an instance of ``WandbConfig`` or None. You can instead pass None if not using wandb
+            Each configuration should be either an instance of ``WandbConfig`` or None.
+            You can instead pass None if not using wandb
         :param with_progress_bar: A boolean indicating whether to display a progress bar for the jobs
         :param output_error_messages: A boolean indicating whether to output more verbose error messages
         :param max_retries: The maximum number of times to retry a job if it is interrupted
@@ -41,6 +42,9 @@ class SubmititState:
         """
         if job_wandb_configs is None:
             job_wandb_configs = [None for _ in range(len(job_run_configs))]
+        
+        # update the unique IDs so that the runs can be resumed
+        update_to_unique_wandb_ids(job_wandb_configs)
         assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
 
         self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
