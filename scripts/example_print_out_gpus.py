@@ -21,7 +21,7 @@ job_configs = [BaseJobConfig for _ in range(10)]
 wandb_configs = None
 
 # This defines the function that our job should execute. This is used to create
-# a function job. It takes in the job_cfg as a paramater (but doesn't use it in this case)
+# a function job. It takes in the job_cfg as a parameter (but doesn't use it in this case)
 def job_fn(job_cfg: BaseJobConfig):
     from submitit_tools.jobs import run_nvidia_smi
     import re

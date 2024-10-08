@@ -49,7 +49,7 @@ class BaseJob(ABC):
     The __init__ method should take in a JobConfig and a WandbConfig. You can add extra logic
     here but it is not needed.
 
-    Since the job is created and then pickled to the correct compute node, you must overide the
+    Since the job is created and then pickled to the correct compute node, you must override the
     _initialize method to initialize your job with all of the train information
 
     The __call__ method is called once and contains the entire job

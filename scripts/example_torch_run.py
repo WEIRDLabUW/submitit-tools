@@ -88,7 +88,7 @@ class ExampleMNISTJob(BaseJob):
         return f"Success! Parameters: {asdict(self.job_config)}"
 
     def _save_checkpoint(self):
-        # Save the checkpoing.
+        # Save the checkpointing.
         state_dict = {
             "completed_epochs": self.completed_epochs,
             "network": self.network.state_dict(),
@@ -98,7 +98,7 @@ class ExampleMNISTJob(BaseJob):
 
 
 def generate_train_configs():
-    # Create a custom function to initalize the job configs and wandb configs during the grid
+    # Create a custom function to initialize the job configs and wandb configs during the grid
     # search
     def creation_fn(learning_rate, batch_size):
         job =MNISTRunConfig(
@@ -116,7 +116,7 @@ def generate_train_configs():
             )
         return (job, wdb)
     
-    # Define the paramaters to search over
+    # Define the parameters to search over
     params = {
                 "learning_rate": [0.001, 0.01, 0.1],
                 "batch_size": [32, 64, 128],

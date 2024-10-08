@@ -6,7 +6,7 @@ from submitit_tools.configs import SubmititExecutorConfig, BaseJobConfig, WandbC
 
 
 # 1. This is the "TopLevel" JobConfig which will be the base
-# for the progrmatic modifications (e.g. to be sweeped). 
+# for the programmatic modifications (e.g. to be swept).
 @dataclass
 class SimpleAddJobConfig(BaseJobConfig):
     first_number: int = 1
@@ -25,7 +25,7 @@ class ExampleExecutorConfig(SubmititExecutorConfig):
     root_folder: str = "logging_dir"
 
 
-# 3. Programatically describe how you will vary each Base Config.
+# 3. Programmatically describe how you will vary each Base Config.
 # For example, sweep the second number value from 0-9
 # Instantiate a list of job configs with corresponding wandb configs.
 job_configs = []
@@ -39,7 +39,7 @@ for i in range(10):
     wandb_configs.append(None)
 
 # Note, there is a built in utility that does this for you. You can define a custom 
-# initalization method, or just use the default
+# initialization method, or just use the default
 from submitit_tools.jobs import grid_search_job_configs
 params ={
     "first_number": 0,

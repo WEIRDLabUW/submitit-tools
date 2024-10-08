@@ -19,10 +19,10 @@ class SubmititExecutorConfig:
     mem_gb: int = 10  # This is the amount of ram required per node
     slurm_partition: str = "ckpt-all"  # This is the partition to which the job is submitted
     slurm_constraint: str = None # the constraints on the nodes that you need (i.e gpu types), like "l40s|a40"
-    # This is the extra paramater dictionary where args become SBATCH commands. Probably do not need to use
+    # This is the extra parameter dictionary where args become SBATCH commands. Probably do not need to use
     slurm_additional_parameters: dict = field(default_factory=lambda: {})
     
-    # These paramaters control the mail to aspects of slurm. They default to None which does not send any emails.
+    # These parameters control the mail to aspects of slurm. They default to None which does not send any emails.
     slurm_mail_user: Union[str, None] = None  # override with your email, e.g "jacob33@uw.edu"
     slurm_mail_type: Union[str, None] = None  # override with the type of email you want, e.g "BEGIN,END"
 

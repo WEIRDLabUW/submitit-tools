@@ -6,7 +6,7 @@ from typing import Callable, Any
 
 class FunctionJob(BaseJob):
     """This class is a default job with the following behavior: 
-        - It has a static field function_callback that needs to be set in the begining
+        - It has a static field function_callback that needs to be set in the beginning
         - The function is a static class variable and all instances of the job will call it
         - It's only arguments can be your job config
     The purpose of this job is to make it so that if you want a job that does not checkpoint and on early termination

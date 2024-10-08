@@ -26,15 +26,18 @@ them to submitit tools.
 
 ### Important things to note:
 - You need to make sure that the checkpoint path is **unique for each run**. If it is not,
-    it will just load the checkpointing from the previous run and then imediatly finish or cause other weird bugs.
+    it will just load the checkpointing from the previous run and then immediately finish or cause other weird bugs.
 - You can use the results from the submitit state, and add no checkpointing functionality which 
     would work on runs on the lab partitions where you know they won't be interrupted or prempted. The util 
 - You do not have to use the WANDB config and can instead handle wandb yourself. If you choose to do so, make sure that you handle the checkpointing and resuming of wandb runs if you expect this to come up. You can look into this code-base to get insight into how to do this
 
 
-## Paramaters you want to change in the submitit executor config:
-This is the base executor config with all of the paramaters. You don't usually have to touch all of them
+## Parameters you want to change in the submitit executor config:
+This is the base executor config with all the parameters. You don't usually have to touch all of them
 ```python
+from dataclasses import dataclass, field
+from typing import Union
+
 @dataclass
 class SubmititExecutorConfig:
     root_folder: str = "default_root_folder"  # This is the root folder to where submitit logs are saved
@@ -51,24 +54,24 @@ class SubmititExecutorConfig:
     cpus_per_task: int = 4  # This is the number of cpus per task
     mem_gb: int = 10  # This is the amount of ram required per node
     slurm_partition: str = "ckpt-all"  # This is the partition to which the job is submitted
-    slurm_constraint: str = None # the constraints on the nodes that you need (i.e gpu types), like "l40s|a40"
-    # This is the extra paramater dictionary where args become SBATCH commands. Probably do not need to use but if you do, it will be written like --SBATCH key=value in the submitted bash script.
+    slurm_constraint: str = None # the constraints on the nodes that you need (i.e. gpu types), like "l40s|a40"
+    # This is the extra parameter dictionary where args become SBATCH commands. Probably do not need to use but if you do, it will be written like --SBATCH key=value in the submitted bash script.
 
     slurm_additional_parameters: dict = field(default_factory=lambda: {})
     
-    # These paramaters control the mail to aspects of slurm. They default to None which does not send any emails.
+    # These parameters control the mail to aspects of slurm. They default to None which does not send any emails.
     slurm_mail_user: Union[str, None] = None  # override with your email, e.g "jacob33@uw.edu"
     slurm_mail_type: Union[str, None] = None  # override with the type of email you want, e.g "BEGIN,END"
 ```
 
-#### Slurm GPU Paramaters:
-- For the node types, if you want to request a node with a specific gpu number and type, you can do it with a list like this `type:num` where it will asign your job to the first availible node with gpus of that number and type. You can use the slurm_constraint to request multiple different options. For example, to use all gpus on the ckpt-all that are powerful and 1 per job, I set `slurm_constraints="a40|l40|l40s|a100"` and `slurm_gpus_per_node="1"`.
+#### Slurm GPU Parameters:
+- For the node types, if you want to request a node with a specific gpu number and type, you can do it with a list like this `type:num` where it will assign your job to the first available node with gpus of that number and type. You can use the slurm_constraint to request multiple different options. For example, to use all gpus on the ckpt-all that are powerful and 1 per job, I set `slurm_constraints="a40|l40|l40s|a100"` and `slurm_gpus_per_node="1"`.
 
 ## Clear Code Examples:
 
 
 To use this for your own code, you first need to create a RunConfig. All a run config represents is
-the paramaters that you want to be able to pass your runs. They can be what ever you want
+the parameters that you want to be able to pass your runs. They can be what ever you want
 
 ```python
 from submitit_tools.configs import BaseJobConfig
@@ -105,7 +108,7 @@ class CustomJob(BaseJob):
         self.job_config: CustomJobConfig = run_config 
 
     def _initialize(self):
-        # Write code to initialize all the fields in your class. This runs on the alocated node.
+        # Write code to initialize all the fields in your class. This runs on the allocated node.
         self.custom_field = self.job_config.parameter2 * self.job_config.parameter1
         
         if self.checkpoint_exists():
@@ -183,7 +186,7 @@ There is also a tool to help with sweeping configs. Using the example `CustomJob
 ```python
 from submitit_tools.jobs import grid_search_job_configs
 params = {
-    "parameter1": 4
+    "parameter1": 4,
     "parameter2": [[1,2], [2, 3, 4], [4, 3, 4]]
 }
 job_configs = grid_search_job_configs(params, job_cls = CustomJobConfig)
@@ -199,6 +202,6 @@ This will create 3 jobs (a grid search over the params). You can also pass a cus
 - ~~add utils to grid search and jobs without checkpointing~~
 - ~~add a debug mode~~
 - ~~Figure out requesting multiple types of gpus for large checkpoint runs~~
-- ~~Add functionality to cancel jobs if the executor dies, or the user wants to. Right now if the main file crashes, the jobs will still keep runing, just without  being requeued if needed.~~
+- ~~Add functionality to cancel jobs if the executor dies, or the user wants to. Right now if the main file crashes, the jobs will still keep running, just without  being requeued if needed.~~
 
 
