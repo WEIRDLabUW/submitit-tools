@@ -49,21 +49,21 @@ class SubmititState:
         update_to_unique_wandb_ids(job_wandb_configs)
         assert len(job_run_configs) == len(job_wandb_configs), "The number of job configs and wandb configs must match"
 
-        self.executor: submitit.AutoExecutor = self._init_executor_(executor_config)
-        self.job_cls: Type[BaseJob] = job_cls
+        self._executor: submitit.AutoExecutor = self._init_executor_(executor_config)
+        self._job_cls: Type[BaseJob] = job_cls
         self.max_retries: int = max_retries
         self.output_error_messages = output_error_messages
         self.progress_bar = tqdm(total=len(job_run_configs), desc="Job Progress") if with_progress_bar else None
 
-        self.pending_jobs: List[JobBookKeeping] = [
+        self._pending_jobs: List[JobBookKeeping] = [
             JobBookKeeping(job_config, wandb_config) for job_config, wandb_config in
             zip(job_run_configs, job_wandb_configs)
         ]
 
-        self.running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurrent_jobs if num_concurrent_jobs > 0
-                                                                         else len(self.pending_jobs))
+        self._running_jobs: List[Union[JobBookKeeping, None]] = [None] * (num_concurrent_jobs if num_concurrent_jobs > 0
+                                                                         else len(self._pending_jobs))
 
-        self.finished_jobs: List[JobBookKeeping] = []
+        self._finished_jobs: List[JobBookKeeping] = []
 
         if cancel_on_exit:
             atexit.register(self._cancel_all)
@@ -94,20 +94,20 @@ class SubmititState:
         """
         Private helper method to move jobs from pending to running if possible
         """
-        for i in range(len(self.running_jobs)):
-            if len(self.pending_jobs) == 0:
+        for i in range(len(self._running_jobs)):
+            if len(self._pending_jobs) == 0:
                 # No pending jobs to add
                 return
 
-            if self.running_jobs[i] is not None:
+            if self._running_jobs[i] is not None:
                 # We already have a running job or no pending left at this index so don't do anything
                 continue
             # We have to queue a job if we can
-            job = self.executor.submit(
-                self.job_cls(self.pending_jobs[0].job_config, self.pending_jobs[0].wandb_config)
+            job = self._executor.submit(
+                self._job_cls(self._pending_jobs[0].job_config, self._pending_jobs[0].wandb_config)
             )
-            self.running_jobs[i] = self.pending_jobs.pop(0)
-            self.running_jobs[i].job = job
+            self._running_jobs[i] = self._pending_jobs.pop(0)
+            self._running_jobs[i].job = job
             assert job is not None, "Job is None"
 
     def run_all_jobs(self, sleep_time: int =1) -> List[Any]:
@@ -131,11 +131,11 @@ class SubmititState:
         It both finishes completed jobs, as well as starts up the next jobs
         in the queue if possible
         """
-        for i in range(len(self.running_jobs)):
-            if self.running_jobs[i] is None:
+        for i in range(len(self._running_jobs)):
+            if self._running_jobs[i] is None:
                 continue
 
-            current_job = self.running_jobs[i]
+            current_job = self._running_jobs[i]
             assert current_job.job is not None, "Job is running but job is None"
 
             if not current_job.done():
@@ -180,8 +180,8 @@ class SubmititState:
 
                 # Resubmit the job
                 current_job.retries += 1
-                current_job.job = self.executor.submit(
-                    self.job_cls(current_job.job_config, current_job.wandb_config)
+                current_job.job = self._executor.submit(
+                    self._job_cls(current_job.job_config, current_job.wandb_config)
                 )
 
         # If we ended up finishing a job, we can add a new one
@@ -191,11 +191,11 @@ class SubmititState:
         """Private helper method to remove a job from the currently working
         on queue
         """
-        job_book_keeping = self.running_jobs[idx]
-        self.running_jobs[idx] = None
+        job_book_keeping = self._running_jobs[idx]
+        self._running_jobs[idx] = None
         job_book_keeping.result = result
         job_book_keeping.job = None
-        self.finished_jobs.append(job_book_keeping)
+        self._finished_jobs.append(job_book_keeping)
 
         # Update the progress bar
         if self.progress_bar is not None:
@@ -203,7 +203,7 @@ class SubmititState:
 
     def _cancel_all(self):
         """Private helper method to cancel all running jobs"""
-        for job in self.running_jobs:
+        for job in self._running_jobs:
             if job is not None:
                 job.job.cancel(check=False)
 
@@ -214,7 +214,7 @@ class SubmititState:
         Returns:
             int: The number of tasks left
         """
-        return len(self.pending_jobs) + sum(1 for job in self.running_jobs if job is not None)
+        return len(self._pending_jobs) + sum(1 for job in self._running_jobs if job is not None)
 
     def done(self):
         """This method returns if the entire task is finished
@@ -222,7 +222,7 @@ class SubmititState:
         Returns:
             bool: True if the task is finished, False otherwise
         """
-        return len(self.pending_jobs) == 0 and all(job is None for job in self.running_jobs)
+        return len(self._pending_jobs) == 0 and all(job is None for job in self._running_jobs)
 
     @property
     def results(self):
@@ -231,7 +231,7 @@ class SubmititState:
         have a multitask job there will be nested lists so it is list[list[job results]]. If
         just single task jobs, it will be a list[results] where results are what your job returns
         """
-        return [job.result for job in self.finished_jobs]
+        return [job.result for job in self._finished_jobs]
 
     def __str__(self):
         result = ""
