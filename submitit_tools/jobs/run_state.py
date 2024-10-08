@@ -1,5 +1,6 @@
 from dataclasses import asdict
-from typing import List, Type, Union
+import time
+from typing import List, Type, Union, Any
 import atexit
 
 import submitit
@@ -19,11 +20,12 @@ class SubmititState:
                  executor_config: SubmititExecutorConfig,
                  job_run_configs: List[BaseJobConfig],
                  job_wandb_configs: Union[List[Union[WandbConfig, None]], None],
-                 with_progress_bar: bool = False,
+                 with_progress_bar: bool = True,
                  output_error_messages: bool = True,
                  max_retries: int = 5,
-                 num_concurrent_jobs: int = 10,
-                 cancel_on_exit: bool = True):
+                 num_concurrent_jobs: int = -1,
+                 cancel_on_exit: bool = True
+                 ):
         """
         Initializes the SubmititState instance.
 
@@ -75,6 +77,14 @@ class SubmititState:
         """
 
         kwargs = asdict(config)
+        debug_mode = kwargs.pop("debug_mode")
+
+        if debug_mode:
+            # debug so run locally
+            executor = submitit.AutoExecutor(folder=kwargs.pop("root_folder"), cluster="debug")
+            return executor
+        
+        # real run
         executor = submitit.AutoExecutor(folder=kwargs.pop("root_folder"))
         executor.update_parameters(**kwargs)
 
@@ -100,6 +110,21 @@ class SubmititState:
             self.running_jobs[i].job = job
             assert job is not None, "Job is None"
 
+    def run_all_jobs(self, sleep_time: int =1) -> List[Any]:
+        """This code will block and run/update this state until all the jobs are finished.
+        This replaces the user having to make a while loop, and call the update_state() themselves.
+
+        Args:
+            sleep_time (int): How long to wait between calling update_state(). Defaults to 1. 
+            When done, state.done() will be true
+        Returns:
+            List[Any]: The results from the job, same as the self.results attribute
+        """
+        while not self.done():
+            self.update_state()
+            time.sleep(sleep_time)
+        return self.results
+    
     def update_state(self):
         """
         This method is called to update the current state of this object.
