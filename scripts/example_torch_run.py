@@ -120,9 +120,10 @@ def generate_train_configs():
 
 def main():
     config = SubmititExecutorConfig(root_folder="mnest_submitit_logs",
+                                    slurm_partition="gpu-a40",
                                     slurm_name="submitit-test",
                                     timeout_min=60 * 2,
-                                    cpus_per_task=16,
+                                    cpus_per_task=4,
                                     mem_gb=24)
     job_configs, wandb_configs = generate_train_configs()
     state = SubmititState(
@@ -132,7 +133,7 @@ def main():
         job_wandb_configs=wandb_configs,
         with_progress_bar=True,
         max_retries=4,
-        num_concurrent_jobs=4
+        num_concurrent_jobs=8
     )
 
     while state.done() is False:

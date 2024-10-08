@@ -21,4 +21,5 @@ class WandbConfig:
     notes: str = "default_notes"
     resume: str = "allow"
     mode: str = "online"  # Wandb sometimes causes problems with the voulume of api calls so you can set this to "ofline"
-    id: str = None  # You MUST overide this value with a unique id that can be used to resume the run
+    id: str = None  # This MUST be a unique id that can be used to resume the run otherwise you will 
+                    # have weird conflicting wandb things going on. Submitit-tools will do this automatically
