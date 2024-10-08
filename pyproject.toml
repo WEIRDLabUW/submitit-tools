@@ -20,7 +20,7 @@ torch = ["torch", "torchvision"]
 Repository = "https://github.com/WEIRDLabUW/submitit-tools"
 
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=45", "wheel", "build"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
