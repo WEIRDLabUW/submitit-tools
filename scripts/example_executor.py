@@ -38,6 +38,7 @@ for i in range(10):
         ))
     wandb_configs.append(None)
 
+# 3. Another way:
 # Note, there is a built in utility that does this for you. You can define a custom 
 # initialization method, or just use the default
 from submitit_tools.jobs import grid_search_job_configs
@@ -48,11 +49,7 @@ params ={
 
 job_configs = grid_search_job_configs(params, job_cls=SimpleAddJobConfig)
 
-# 3. This is the Job description.
-# First, configure both:
-#    RunConfig: what is passed to the Job
-#    WandBConfig: how it is logged
-# Second, describe what happens on "__call__"
+# 4. Define your actual job
 class SimpleAddJob(BaseJob):
     def __init__(self, job_config: SimpleAddJobConfig, wandb_config: None):
         super().__init__(job_config, wandb_config)
@@ -72,8 +69,16 @@ class SimpleAddJob(BaseJob):
         # Since this is a simple addition task, we do not need to checkpoint
         pass
 
+# 4. Another way
+# You can use the function job to do this for you (since this above job does not use the checkpointing functionality)
+from submitit_tools.jobs import create_function_job
+def job_fn(cfg: SimpleAddJobConfig):
+    time.sleep(5)
+    return cfg.job_config.first_number + cfg.job_config.second_number
+job_cls = create_function_job(job_fn)
 
-# 4. Create a Submitit state manager.
+
+# 5. Create a Submitit state manager.
 state = SubmititState(
     job_cls=SimpleAddJob,
     executor_config=ExampleExecutorConfig(),
