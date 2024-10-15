@@ -173,7 +173,7 @@ for result in state.results:
     print(result)
 ```
 ### Utilities:
-There is a utility to create a job that just runs a function given a config. This job though has no checkpointing functionality but it will requeue if crashes  or times out (I use on ckpt if jobs less than 8h) since don't have to worry about checkpointing logic
+There is a utility to create a job that just runs a function given a config. This job though has no checkpointing functionality but it will requeue if crashes  or times out (I use on ckpt if jobs less than 8h) if I don't want to worry about checkpointing logic since it will be requeued until it finishes.
 
 ```python
 def job_function(job_config):
