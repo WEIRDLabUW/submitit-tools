@@ -48,6 +48,7 @@ params ={
 }
 
 job_configs = grid_search_job_configs(params, job_cls=SimpleAddJobConfig)
+wandb_configs = None    # Set the wandb configs to None instead of a list of None
 
 # 4. Define your actual job
 class SimpleAddJob(BaseJob):
