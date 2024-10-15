@@ -1,13 +1,13 @@
 # submitit-tools (ST)
 
-This repository aims to give a simple way to submit jobs to Hyak integrating in weights and biases. I personally find it very useful at a small scale, but it's main purpose is to manage and run lots and lots of hyak runs. You can install it as a library
+This repository aims to give a simple way to submit jobs to Hyak, integrating weights and biases. I personally find it very useful at a small scale, but it's main purpose is to manage and run lots and lots of hyak runs. You can install it as a library
 or as a submodule in your repository. Any changes or bug fixes are welcome!
 
-It is also useful to not take up all of shared lab resources and utilize only a specific number of gpus at a time.
+It is also useful to not take up all of the shared lab resources and utilize only a specific number of GPUs at a time.
 ## Installation
 Run the following command to install this as a package.
-```bash
-pip install git+https://github.com/WEIRDLabUW/submitit-tools.git
+```
+pip install submitit-tools
 ```
 Alternatively, run the following commands to install it as a submodule:
 ```bash
@@ -18,18 +18,19 @@ pip install -e .
 
 ## Usage:
 
-#### To see examples that are concrete, run `python scripts/example_torch_run.py`. This is a good entry point and will train up 9 mnest networks. Note you will need torch and torchvision in your conda environment.
+#### To see concrete examples, run `python scripts/example_torch_run.py`. This is a good entry point and will train up 9 mnest networks. Note you will need torch and torchvision in your conda environment.
 There is also a good example with comments in `scripts/example_executor.py`.
 
 For usage, you should only need to define a job class, run config. The rest is just instantiating configs and passing
 them to submitit tools.
 
 ### Important things to note:
-- You need to make sure that the checkpoint path is **unique for each run**. If it is not,
+- You need to ensure that the checkpoint path is **unique for each run**. If it is not,
     it will just load the checkpointing from the previous run and then immediately finish or cause other weird bugs.
 - You can use the results from the submitit state, and add no checkpointing functionality which 
-    would work on runs on the lab partitions where you know they won't be interrupted or prempted. The util 
-- You do not have to use the WANDB config and can instead handle wandb yourself. If you choose to do so, make sure that you handle the checkpointing and resuming of wandb runs if you expect this to come up. You can look into this code-base to get insight into how to do this
+    would work on runs on the lab partitions where you know they won't be interrupted or preempted. Use `create_function_job` to create these jobs.
+- You do not have to use the WANDB config and can instead handle wandb yourself. If you choose to do so, ensure you handle the checkpointing and resuming of wandb runs if you expect this to come up. You can look into this code-base to get insight into how to do this
+- Sometimes, queuing jobs from a GPU node does not work; instead, use CPU-only nodes.
 
 
 ## Parameters you want to change in the submitit executor config:
@@ -45,17 +46,17 @@ class SubmititExecutorConfig:
     debug_mode: bool = False
     
     # If not debugging:
-    slurm_account: str = "weirdlab"  # This is the account to which the job is ran from
-    slurm_ntasks_per_node: int = 1  # The number of tasks per node. You should keep this as 1 unless running distributed training
-    slurm_gpus_per_node: str = "a40:1"  # The number of gpus that the job will take, can be of form 1 or type:#
+    slurm_account: str = "weirdlab"  # This is the account to which the job is run from
+    slurm_ntasks_per_node: int = 1  # The number of tasks per node. You should keep this as one unless running distributed training
+    slurm_gpus_per_node: str = "a40:1"  # The number of GPUs that the job will take can be of form 1 or type:#
     slurm_nodes: int = 1  # The number of nodes utilized
     slurm_name: str = "experiment"  # This is the name of the job that shows up on squeue
     timeout_min: int = (4 * 60) - 1  # This is the timeout in minutes
     cpus_per_task: int = 4  # This is the number of cpus per task
-    mem_gb: int = 10  # This is the amount of ram required per node
+    mem_gb: int = 10  # This is the amount of RAM required per node
     slurm_partition: str = "ckpt-all"  # This is the partition to which the job is submitted
     slurm_constraint: str = None # the constraints on the nodes that you need (i.e. gpu types), like "l40s|a40"
-    # This is the extra parameter dictionary where args become SBATCH commands. Probably do not need to use but if you do, it will be written like --SBATCH key=value in the submitted bash script.
+    # This is the extra parameter dictionary where args become SBATCH commands. You probably do not need to use but if you do, it will be written like --SBATCH key=value in the submitted bash script.
 
     slurm_additional_parameters: dict = field(default_factory=lambda: {})
     
@@ -65,13 +66,13 @@ class SubmititExecutorConfig:
 ```
 
 #### Slurm GPU Parameters:
-- For the node types, if you want to request a node with a specific gpu number and type, you can do it with a list like this `type:num` where it will assign your job to the first available node with gpus of that number and type. You can use the slurm_constraint to request multiple different options. For example, to use all gpus on the ckpt-all that are powerful and 1 per job, I set `slurm_constraints="a40|l40|l40s|a100"` and `slurm_gpus_per_node="1"`.
+- For the node types, if you want to request a node with a specific gpu number and type, you can do it with a list like this `type:num` where it will assign your job to the first available node with gpus of that number and type. You can use the slurm_constraint to request multiple different options. For example, to use all GPUs on the ckpt-all that are powerful and 1 per job, I set `slurm_constraints="a40|l40|l40s|a100"` and `slurm_gpus_per_node="1"`.
 
 ## Clear Code Examples:
 
 
 To use this for your own code, you first need to create a RunConfig. All a run config represents is
-the parameters that you want to be able to pass your runs. They can be what ever you want
+the parameters that you want to be able to pass your runs. They can be whatever you want
 
 ```python
 from submitit_tools.configs import BaseJobConfig
@@ -104,7 +105,7 @@ class CustomJob(BaseJob):
         # Note: This method runs synchronously on the node queuing all the jobs, so
         # Try not to do much at all in this method. You do not have to define this method
         
-        # I like to type specify the config here to help pycharm's intelisense
+        # I like to type specify the config here to help Pycharm's IntelliSense
         self.job_config: CustomJobConfig = run_config 
 
     def _initialize(self):
@@ -128,7 +129,7 @@ class CustomJob(BaseJob):
         pass
 ```
 
-Then you can create an executor state which handles the job submission and management:
+Then you can create an executor state that handles the job submission and management:
 
 ```python
 from submitit_tools.jobs import SubmititState
