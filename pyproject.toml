@@ -23,6 +23,5 @@ Repository = "https://github.com/WEIRDLabUW/submitit-tools"
 requires = ["setuptools>=45", "wheel", "build"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["submitit_tools"]
-
+[tool.setuptools.packages]
+find = {}
