@@ -5,6 +5,7 @@ or as a submodule in your repository. Any changes or bug fixes are welcome!
 
 It is also useful to not take up all of the shared lab resources and utilize only a specific number of GPUs at a time.
 ## Installation
+### You must install it from the source with `pip install -e .`; the installation is not working in any other way for some reason.
 Run the following command to install this as a package.
 ```
 pip install submitit-tools
