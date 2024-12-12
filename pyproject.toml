@@ -1,6 +1,6 @@
 [project]
 name = "submitit-tools"
-version = "0.1.0"
+version = "1.0.0"
 description = "A package to manage slurm jobs on a HPC cluster"
 authors = [
     {name = "Jacob Berg", email = "jacob33@cs.washington.edu"}
