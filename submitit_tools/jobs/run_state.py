@@ -170,7 +170,7 @@ class SubmititState:
                     print(f"Job {current_job.job_config.checkpoint_path} was interrupted")
                     print(f"Error: {e}")
                 # Requeue Logic
-                if current_job.retries > self.max_retries:
+                if current_job.retries >= self.max_retries:
                     self._remove_job(i, FailedJobState(TimeoutError("too many retries"), "to_many_retries",
                                                        current_job.job_config, current_job.wandb_config))
                     print(f"\033[94mJob {current_job.job_config.checkpoint_path} failed after {self.max_retries} retries\033[0m")
